@@ -10,6 +10,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.scrapeverything.app.data.local.TokenStorage
+import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.navigation.NavGraph
 import com.scrapeverything.app.ui.theme.ScrapEverythingTheme
 import dagger.hilt.android.AndroidEntryPoint
@@ -20,6 +21,9 @@ class MainActivity : ComponentActivity() {
 
     @Inject
     lateinit var tokenStorage: TokenStorage
+
+    @Inject
+    lateinit var sessionManager: SessionManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -34,7 +38,8 @@ class MainActivity : ComponentActivity() {
                     val navController = rememberNavController()
                     NavGraph(
                         navController = navController,
-                        tokenStorage = tokenStorage
+                        tokenStorage = tokenStorage,
+                        sessionManager = sessionManager
                     )
                 }
             }
