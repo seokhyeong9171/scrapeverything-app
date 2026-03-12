@@ -147,8 +147,17 @@ fun ScrapDetailScreen(
                     // URL 카드
                     Card(
                         onClick = {
-                            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(detail.url))
-                            context.startActivity(intent)
+                            try {
+                                val urlStr = if (detail.url.startsWith("http://") || detail.url.startsWith("https://")) {
+                                    detail.url
+                                } else {
+                                    "https://${detail.url}"
+                                }
+                                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(urlStr))
+                                context.startActivity(intent)
+                            } catch (_: Exception) {
+                                // 브라우저를 열 수 없는 경우 무시
+                            }
                         },
                         colors = CardDefaults.cardColors(
                             containerColor = MaterialTheme.colorScheme.primaryContainer
