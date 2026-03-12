@@ -9,14 +9,20 @@ import androidx.lifecycle.ViewModel;
 import com.google.errorprone.annotations.CanIgnoreReturnValue;
 import com.scrapeverything.app.data.api.AuthApi;
 import com.scrapeverything.app.data.api.CategoryApi;
+import com.scrapeverything.app.data.api.MemberApi;
+import com.scrapeverything.app.data.api.ScrapApi;
 import com.scrapeverything.app.data.local.TokenStorage;
 import com.scrapeverything.app.data.repository.AuthRepository;
 import com.scrapeverything.app.data.repository.CategoryRepository;
+import com.scrapeverything.app.data.repository.MemberRepository;
+import com.scrapeverything.app.data.repository.ScrapRepository;
 import com.scrapeverything.app.di.NetworkModule_ProvideAuthApiFactory;
 import com.scrapeverything.app.di.NetworkModule_ProvideCategoryApiFactory;
 import com.scrapeverything.app.di.NetworkModule_ProvideLoggingInterceptorFactory;
+import com.scrapeverything.app.di.NetworkModule_ProvideMemberApiFactory;
 import com.scrapeverything.app.di.NetworkModule_ProvideOkHttpClientFactory;
 import com.scrapeverything.app.di.NetworkModule_ProvideRetrofitFactory;
+import com.scrapeverything.app.di.NetworkModule_ProvideScrapApiFactory;
 import com.scrapeverything.app.network.AuthInterceptor;
 import com.scrapeverything.app.network.RefreshApiProvider;
 import com.scrapeverything.app.network.RefreshInterceptor;
@@ -29,6 +35,18 @@ import com.scrapeverything.app.ui.category.CategoryListViewModel;
 import com.scrapeverything.app.ui.category.CategoryListViewModel_HiltModules;
 import com.scrapeverything.app.ui.category.CategoryListViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
 import com.scrapeverything.app.ui.category.CategoryListViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.scrapeverything.app.ui.member.MyPageViewModel;
+import com.scrapeverything.app.ui.member.MyPageViewModel_HiltModules;
+import com.scrapeverything.app.ui.member.MyPageViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.scrapeverything.app.ui.member.MyPageViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.scrapeverything.app.ui.scrap.ScrapDetailViewModel;
+import com.scrapeverything.app.ui.scrap.ScrapDetailViewModel_HiltModules;
+import com.scrapeverything.app.ui.scrap.ScrapDetailViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.scrapeverything.app.ui.scrap.ScrapDetailViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
+import com.scrapeverything.app.ui.scrap.ScrapListViewModel;
+import com.scrapeverything.app.ui.scrap.ScrapListViewModel_HiltModules;
+import com.scrapeverything.app.ui.scrap.ScrapListViewModel_HiltModules_BindsModule_Binds_LazyMapKey;
+import com.scrapeverything.app.ui.scrap.ScrapListViewModel_HiltModules_KeyModule_Provide_LazyMapKey;
 import dagger.hilt.android.ActivityRetainedLifecycle;
 import dagger.hilt.android.ViewModelLifecycle;
 import dagger.hilt.android.internal.builders.ActivityComponentBuilder;
@@ -393,7 +411,7 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
 
     @Override
     public Map<Class<?>, Boolean> getViewModelKeys() {
-      return LazyClassKeyMap.<Boolean>of(MapBuilder.<String, Boolean>newMapBuilder(2).put(CategoryListViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, CategoryListViewModel_HiltModules.KeyModule.provide()).put(LoginViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, LoginViewModel_HiltModules.KeyModule.provide()).build());
+      return LazyClassKeyMap.<Boolean>of(MapBuilder.<String, Boolean>newMapBuilder(5).put(CategoryListViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, CategoryListViewModel_HiltModules.KeyModule.provide()).put(LoginViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, LoginViewModel_HiltModules.KeyModule.provide()).put(MyPageViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, MyPageViewModel_HiltModules.KeyModule.provide()).put(ScrapDetailViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, ScrapDetailViewModel_HiltModules.KeyModule.provide()).put(ScrapListViewModel_HiltModules_KeyModule_Provide_LazyMapKey.lazyClassKeyName, ScrapListViewModel_HiltModules.KeyModule.provide()).build());
     }
 
     @Override
@@ -419,6 +437,8 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
   }
 
   private static final class ViewModelCImpl extends ScrapEverythingApplication_HiltComponents.ViewModelC {
+    private final SavedStateHandle savedStateHandle;
+
     private final SingletonCImpl singletonCImpl;
 
     private final ActivityRetainedCImpl activityRetainedCImpl;
@@ -429,12 +449,18 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
 
     private Provider<LoginViewModel> loginViewModelProvider;
 
+    private Provider<MyPageViewModel> myPageViewModelProvider;
+
+    private Provider<ScrapDetailViewModel> scrapDetailViewModelProvider;
+
+    private Provider<ScrapListViewModel> scrapListViewModelProvider;
+
     private ViewModelCImpl(SingletonCImpl singletonCImpl,
         ActivityRetainedCImpl activityRetainedCImpl, SavedStateHandle savedStateHandleParam,
         ViewModelLifecycle viewModelLifecycleParam) {
       this.singletonCImpl = singletonCImpl;
       this.activityRetainedCImpl = activityRetainedCImpl;
-
+      this.savedStateHandle = savedStateHandleParam;
       initialize(savedStateHandleParam, viewModelLifecycleParam);
 
     }
@@ -444,11 +470,14 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
         final ViewModelLifecycle viewModelLifecycleParam) {
       this.categoryListViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 0);
       this.loginViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 1);
+      this.myPageViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 2);
+      this.scrapDetailViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 3);
+      this.scrapListViewModelProvider = new SwitchingProvider<>(singletonCImpl, activityRetainedCImpl, viewModelCImpl, 4);
     }
 
     @Override
     public Map<Class<?>, javax.inject.Provider<ViewModel>> getHiltViewModelMap() {
-      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(MapBuilder.<String, javax.inject.Provider<ViewModel>>newMapBuilder(2).put(CategoryListViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) categoryListViewModelProvider)).put(LoginViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) loginViewModelProvider)).build());
+      return LazyClassKeyMap.<javax.inject.Provider<ViewModel>>of(MapBuilder.<String, javax.inject.Provider<ViewModel>>newMapBuilder(5).put(CategoryListViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) categoryListViewModelProvider)).put(LoginViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) loginViewModelProvider)).put(MyPageViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) myPageViewModelProvider)).put(ScrapDetailViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) scrapDetailViewModelProvider)).put(ScrapListViewModel_HiltModules_BindsModule_Binds_LazyMapKey.lazyClassKeyName, ((Provider) scrapListViewModelProvider)).build());
     }
 
     @Override
@@ -482,6 +511,15 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
 
           case 1: // com.scrapeverything.app.ui.auth.LoginViewModel 
           return (T) new LoginViewModel(singletonCImpl.authRepositoryProvider.get());
+
+          case 2: // com.scrapeverything.app.ui.member.MyPageViewModel 
+          return (T) new MyPageViewModel(singletonCImpl.memberRepositoryProvider.get(), singletonCImpl.authRepositoryProvider.get());
+
+          case 3: // com.scrapeverything.app.ui.scrap.ScrapDetailViewModel 
+          return (T) new ScrapDetailViewModel(viewModelCImpl.savedStateHandle, singletonCImpl.scrapRepositoryProvider.get());
+
+          case 4: // com.scrapeverything.app.ui.scrap.ScrapListViewModel 
+          return (T) new ScrapListViewModel(viewModelCImpl.savedStateHandle, singletonCImpl.scrapRepositoryProvider.get());
 
           default: throw new AssertionError(id);
         }
@@ -587,6 +625,14 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
 
     private Provider<AuthRepository> authRepositoryProvider;
 
+    private Provider<MemberApi> provideMemberApiProvider;
+
+    private Provider<MemberRepository> memberRepositoryProvider;
+
+    private Provider<ScrapApi> provideScrapApiProvider;
+
+    private Provider<ScrapRepository> scrapRepositoryProvider;
+
     private SingletonCImpl(ApplicationContextModule applicationContextModuleParam) {
       this.applicationContextModule = applicationContextModuleParam;
       initialize(applicationContextModuleParam);
@@ -607,10 +653,15 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
       this.categoryRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<CategoryRepository>(singletonCImpl, 1));
       this.provideAuthApiProvider = DoubleCheck.provider(new SwitchingProvider<AuthApi>(singletonCImpl, 11));
       this.authRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<AuthRepository>(singletonCImpl, 10));
+      this.provideMemberApiProvider = DoubleCheck.provider(new SwitchingProvider<MemberApi>(singletonCImpl, 13));
+      this.memberRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<MemberRepository>(singletonCImpl, 12));
+      this.provideScrapApiProvider = DoubleCheck.provider(new SwitchingProvider<ScrapApi>(singletonCImpl, 15));
+      this.scrapRepositoryProvider = DoubleCheck.provider(new SwitchingProvider<ScrapRepository>(singletonCImpl, 14));
     }
 
     @Override
-    public void injectScrapEverythingApplication(ScrapEverythingApplication arg0) {
+    public void injectScrapEverythingApplication(
+        ScrapEverythingApplication scrapEverythingApplication) {
     }
 
     @Override
@@ -677,6 +728,18 @@ public final class DaggerScrapEverythingApplication_HiltComponents_SingletonC {
 
           case 11: // com.scrapeverything.app.data.api.AuthApi 
           return (T) NetworkModule_ProvideAuthApiFactory.provideAuthApi(singletonCImpl.provideRetrofitProvider.get());
+
+          case 12: // com.scrapeverything.app.data.repository.MemberRepository 
+          return (T) new MemberRepository(singletonCImpl.provideMemberApiProvider.get());
+
+          case 13: // com.scrapeverything.app.data.api.MemberApi 
+          return (T) NetworkModule_ProvideMemberApiFactory.provideMemberApi(singletonCImpl.provideRetrofitProvider.get());
+
+          case 14: // com.scrapeverything.app.data.repository.ScrapRepository 
+          return (T) new ScrapRepository(singletonCImpl.provideScrapApiProvider.get());
+
+          case 15: // com.scrapeverything.app.data.api.ScrapApi 
+          return (T) NetworkModule_ProvideScrapApiFactory.provideScrapApi(singletonCImpl.provideRetrofitProvider.get());
 
           default: throw new AssertionError(id);
         }

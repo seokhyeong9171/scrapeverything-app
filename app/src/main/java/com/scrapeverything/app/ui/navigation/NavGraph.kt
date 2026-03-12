@@ -11,6 +11,7 @@ import com.scrapeverything.app.ui.auth.LoginScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
 import com.scrapeverything.app.ui.member.MyPageScreen
 import com.scrapeverything.app.ui.scrap.ScrapDetailScreen
+import com.scrapeverything.app.ui.scrap.ScrapEditScreen
 import com.scrapeverything.app.ui.scrap.ScrapListScreen
 import com.scrapeverything.app.ui.splash.SplashScreen
 
@@ -93,6 +94,21 @@ fun NavGraph(
             )
         ) {
             ScrapDetailScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onNavigateToEdit = { scrapId ->
+                    navController.navigate(Route.ScrapEdit.createRoute(scrapId))
+                }
+            )
+        }
+
+        // 스크랩 수정
+        composable(
+            route = Route.ScrapEdit.route,
+            arguments = listOf(
+                navArgument("scrapId") { type = NavType.LongType }
+            )
+        ) {
+            ScrapEditScreen(
                 onNavigateBack = { navController.popBackStack() }
             )
         }

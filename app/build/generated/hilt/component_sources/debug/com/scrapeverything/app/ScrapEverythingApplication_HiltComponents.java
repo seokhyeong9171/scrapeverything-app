@@ -4,6 +4,9 @@ import com.scrapeverything.app.di.NetworkModule;
 import com.scrapeverything.app.di.RepositoryModule;
 import com.scrapeverything.app.ui.auth.LoginViewModel_HiltModules;
 import com.scrapeverything.app.ui.category.CategoryListViewModel_HiltModules;
+import com.scrapeverything.app.ui.member.MyPageViewModel_HiltModules;
+import com.scrapeverything.app.ui.scrap.ScrapDetailViewModel_HiltModules;
+import com.scrapeverything.app.ui.scrap.ScrapListViewModel_HiltModules;
 import dagger.Binds;
 import dagger.Component;
 import dagger.Module;
@@ -160,8 +163,11 @@ public final class ScrapEverythingApplication_HiltComponents {
           HiltWrapper_ActivityRetainedComponentManager_LifecycleModule.class,
           HiltWrapper_SavedStateHandleModule.class,
           LoginViewModel_HiltModules.KeyModule.class,
+          MyPageViewModel_HiltModules.KeyModule.class,
+          ScrapDetailViewModel_HiltModules.KeyModule.class,
           ActivityCBuilderModule.class,
-          ViewModelCBuilderModule.class
+          ViewModelCBuilderModule.class,
+          ScrapListViewModel_HiltModules.KeyModule.class
       }
   )
   @ActivityRetainedScoped
@@ -199,7 +205,10 @@ public final class ScrapEverythingApplication_HiltComponents {
       modules = {
           CategoryListViewModel_HiltModules.BindsModule.class,
           HiltWrapper_HiltViewModelFactory_ViewModelModule.class,
-          LoginViewModel_HiltModules.BindsModule.class
+          LoginViewModel_HiltModules.BindsModule.class,
+          MyPageViewModel_HiltModules.BindsModule.class,
+          ScrapDetailViewModel_HiltModules.BindsModule.class,
+          ScrapListViewModel_HiltModules.BindsModule.class
       }
   )
   @ViewModelScoped

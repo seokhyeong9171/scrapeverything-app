@@ -11,5 +11,8 @@ sealed class Route(val route: String) {
     object ScrapDetail : Route("scraps/{scrapId}") {
         fun createRoute(scrapId: Long): String = "scraps/$scrapId"
     }
+    object ScrapEdit : Route("scraps/{scrapId}/edit") {
+        fun createRoute(scrapId: Long): String = "scraps/$scrapId/edit"
+    }
     object MyPage : Route("mypage")
 }
