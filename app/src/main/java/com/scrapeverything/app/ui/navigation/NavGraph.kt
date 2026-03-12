@@ -10,6 +10,7 @@ import androidx.navigation.navArgument
 import com.scrapeverything.app.data.local.TokenStorage
 import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.auth.LoginScreen
+import com.scrapeverything.app.ui.auth.RegisterScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
 import com.scrapeverything.app.ui.member.MyPageScreen
 import com.scrapeverything.app.ui.scrap.ScrapDetailScreen
@@ -62,7 +63,19 @@ fun NavGraph(
                     }
                 },
                 onNavigateToRegister = {
-                    // 향후 회원가입 화면 구현 시 연결
+                    navController.navigate(Route.Register.route)
+                }
+            )
+        }
+
+        // 회원가입
+        composable(Route.Register.route) {
+            RegisterScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onRegisterSuccess = {
+                    navController.navigate(Route.Login.route) {
+                        popUpTo(Route.Register.route) { inclusive = true }
+                    }
                 }
             )
         }
