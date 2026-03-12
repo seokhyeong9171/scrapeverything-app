@@ -8,6 +8,7 @@ import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
+import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.OpenInBrowser
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -17,6 +18,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.ErrorView
@@ -26,6 +29,7 @@ import com.scrapeverything.app.ui.component.FullScreenLoading
 @Composable
 fun ScrapDetailScreen(
     onNavigateBack: () -> Unit,
+    onNavigateToEdit: (scrapId: Long) -> Unit = {},
     viewModel: ScrapDetailViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -33,6 +37,12 @@ fun ScrapDetailScreen(
     val context = LocalContext.current
 
     var showDeleteDialog by remember { mutableStateOf(false) }
+
+    // 수정 화면에서 돌아왔을 때 데이터 갱신
+    LifecycleResumeEffect(Unit) {
+        viewModel.loadScrapDetail()
+        onPauseOrDispose { }
+    }
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
@@ -68,6 +78,15 @@ fun ScrapDetailScreen(
                 },
                 actions = {
                     if (uiState.scrapDetail != null) {
+                        IconButton(onClick = {
+                            onNavigateToEdit(viewModel.getScrapId())
+                        }) {
+                            Icon(
+                                Icons.Outlined.Edit,
+                                contentDescription = "수정",
+                                tint = MaterialTheme.colorScheme.primary
+                            )
+                        }
                         IconButton(onClick = { showDeleteDialog = true }) {
                             Icon(
                                 Icons.Outlined.Delete,

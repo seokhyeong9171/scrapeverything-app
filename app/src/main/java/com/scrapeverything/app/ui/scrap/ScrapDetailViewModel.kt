@@ -37,6 +37,8 @@ class ScrapDetailViewModel @Inject constructor(
 
     private val scrapId: Long = savedStateHandle["scrapId"] ?: 0L
 
+    fun getScrapId(): Long = scrapId
+
     private val _uiState = MutableStateFlow(ScrapDetailUiState())
     val uiState: StateFlow<ScrapDetailUiState> = _uiState.asStateFlow()
 
