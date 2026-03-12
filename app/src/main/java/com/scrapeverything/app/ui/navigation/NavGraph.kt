@@ -118,6 +118,17 @@ fun NavGraph(
                     }
             }
 
+            LaunchedEffect(backStackEntry) {
+                backStackEntry.savedStateHandle.getStateFlow("scrapDeleted", false)
+                    .collect { deleted ->
+                        if (deleted) {
+                            backStackEntry.savedStateHandle["scrapDeleted"] = false
+                            viewModel.refresh()
+                            viewModel.showMessage("스크랩이 삭제되었습니다")
+                        }
+                    }
+            }
+
             ScrapListScreen(
                 onNavigateToScrapDetail = { scrapId ->
                     navController.navigate(Route.ScrapDetail.createRoute(scrapId))
@@ -155,6 +166,10 @@ fun NavGraph(
         ) {
             ScrapDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
+                onDeleteSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("scrapDeleted", true)
+                    navController.popBackStack()
+                },
                 onNavigateToEdit = { scrapId ->
                     navController.navigate(Route.ScrapEdit.createRoute(scrapId))
                 }

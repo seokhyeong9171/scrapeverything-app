@@ -145,6 +145,12 @@ class ScrapListViewModel @Inject constructor(
         }
     }
 
+    fun showMessage(message: String) {
+        viewModelScope.launch {
+            _event.emit(ScrapListEvent.ShowSnackbar(message))
+        }
+    }
+
     fun deleteScrap(scrapId: Long) {
         viewModelScope.launch {
             when (val result = scrapRepository.deleteScrap(scrapId)) {

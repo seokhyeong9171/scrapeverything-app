@@ -29,6 +29,7 @@ import com.scrapeverything.app.ui.component.FullScreenLoading
 @Composable
 fun ScrapDetailScreen(
     onNavigateBack: () -> Unit,
+    onDeleteSuccess: () -> Unit,
     onNavigateToEdit: (scrapId: Long) -> Unit = {},
     viewModel: ScrapDetailViewModel = hiltViewModel()
 ) {
@@ -51,7 +52,7 @@ fun ScrapDetailScreen(
                     snackbarHostState.showSnackbar(event.message)
                 }
                 is ScrapDetailEvent.NavigateBack -> {
-                    onNavigateBack()
+                    onDeleteSuccess()
                 }
             }
         }
