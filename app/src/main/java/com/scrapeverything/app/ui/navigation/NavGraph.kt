@@ -2,17 +2,20 @@ package com.scrapeverything.app.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
+import com.scrapeverything.app.ui.scrap.ScrapListViewModel
 import com.scrapeverything.app.data.local.TokenStorage
 import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.auth.LoginScreen
 import com.scrapeverything.app.ui.auth.RegisterScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
 import com.scrapeverything.app.ui.member.MyPageScreen
+import com.scrapeverything.app.ui.scrap.ScrapAddScreen
 import com.scrapeverything.app.ui.scrap.ScrapDetailScreen
 import com.scrapeverything.app.ui.scrap.ScrapEditScreen
 import com.scrapeverything.app.ui.scrap.ScrapListScreen
@@ -102,12 +105,44 @@ fun NavGraph(
                     defaultValue = ""
                 }
             )
-        ) {
+        ) { backStackEntry ->
+            val viewModel: ScrapListViewModel = hiltViewModel()
+
+            LaunchedEffect(backStackEntry) {
+                backStackEntry.savedStateHandle.getStateFlow("scrapAdded", false)
+                    .collect { added ->
+                        if (added) {
+                            backStackEntry.savedStateHandle["scrapAdded"] = false
+                            viewModel.refresh()
+                        }
+                    }
+            }
+
             ScrapListScreen(
                 onNavigateToScrapDetail = { scrapId ->
                     navController.navigate(Route.ScrapDetail.createRoute(scrapId))
                 },
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateToScrapAdd = { categoryId ->
+                    navController.navigate(Route.ScrapAdd.createRoute(categoryId))
+                },
+                onNavigateBack = { navController.popBackStack() },
+                viewModel = viewModel
+            )
+        }
+
+        // 스크랩 추가
+        composable(
+            route = Route.ScrapAdd.route,
+            arguments = listOf(
+                navArgument("categoryId") { type = NavType.LongType }
+            )
+        ) {
+            ScrapAddScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSaveSuccess = {
+                    navController.previousBackStackEntry?.savedStateHandle?.set("scrapAdded", true)
+                    navController.popBackStack()
+                }
             )
         }
 

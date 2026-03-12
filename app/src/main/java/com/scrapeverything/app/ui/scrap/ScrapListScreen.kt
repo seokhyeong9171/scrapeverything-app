@@ -32,6 +32,7 @@ import com.scrapeverything.app.ui.component.ListBottomLoading
 @Composable
 fun ScrapListScreen(
     onNavigateToScrapDetail: (scrapId: Long) -> Unit,
+    onNavigateToScrapAdd: (categoryId: Long) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: ScrapListViewModel = hiltViewModel()
 ) {
@@ -87,7 +88,17 @@ fun ScrapListScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onNavigateToScrapAdd(uiState.categoryId) }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "스크랩 추가"
+                )
+            }
+        }
     ) { paddingValues ->
 
         PullToRefreshBox(
