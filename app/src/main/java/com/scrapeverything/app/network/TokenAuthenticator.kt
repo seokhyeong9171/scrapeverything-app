@@ -11,47 +11,44 @@ import javax.inject.Singleton
 @Singleton
 class TokenAuthenticator @Inject constructor(
     private val tokenStorage: TokenStorage,
-    private val refreshApiProvider: RefreshApiProvider
+    private val refreshApiProvider: RefreshApiProvider,
+    private val sessionManager: SessionManager
 ) : Authenticator {
 
     override fun authenticate(route: Route?, response: Response): Request? {
         // 이미 retry한 요청이면 중단 (무한 루프 방지)
         if (response.request.header("X-Retry") != null) {
-            tokenStorage.clearTokens()
+            onRefreshFailed()
             return null
         }
 
         // refresh 요청 자체가 실패한 경우 중단
         if (response.request.url.encodedPath.contains("auth/refresh")) {
-            tokenStorage.clearTokens()
+            onRefreshFailed()
             return null
         }
 
         // refresh token으로 새 JWT 발급 시도
         val refreshToken = tokenStorage.getRefreshToken() ?: run {
-            tokenStorage.clearTokens()
+            onRefreshFailed()
             return null
         }
 
         val jwt = tokenStorage.getJwtToken() ?: ""
 
         return try {
-            val refreshResponse = refreshApiProvider.getRefreshApi()
-                .newBuilder()
-                .url(response.request.url.newBuilder()
-                    .encodedPath("/api/v1/auth/refresh")
-                    .build())
+            val refreshRequest = Request.Builder()
+                .url(
+                    response.request.url.newBuilder()
+                        .encodedPath("/api/v1/auth/refresh")
+                        .build()
+                )
                 .post(okhttp3.RequestBody.create(null, ByteArray(0)))
                 .header("Authorization", "Bearer $jwt")
                 .header("Cookie", "refresh_token=$refreshToken")
                 .build()
-                .let { refreshRequest ->
-                    response.networkResponse?.let {
-                        it.request.url.toUrl().openConnection()
-                    }
-                    // OkHttpClient를 직접 사용하여 refresh 요청
-                    refreshApiProvider.executeRefresh(refreshRequest)
-                }
+
+            val refreshResponse = refreshApiProvider.executeRefresh(refreshRequest)
 
             if (refreshResponse.isSuccessful) {
                 // 새 JWT 저장
@@ -71,12 +68,17 @@ class TokenAuthenticator @Inject constructor(
                     .header("X-Retry", "true")
                     .build()
             } else {
-                tokenStorage.clearTokens()
+                onRefreshFailed()
                 null
             }
         } catch (e: Exception) {
-            tokenStorage.clearTokens()
+            onRefreshFailed()
             null
         }
+    }
+
+    private fun onRefreshFailed() {
+        tokenStorage.clearTokens()
+        sessionManager.onSessionExpired()
     }
 }

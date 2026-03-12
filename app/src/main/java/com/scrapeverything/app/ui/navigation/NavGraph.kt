@@ -1,12 +1,14 @@
 package com.scrapeverything.app.ui.navigation
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.navArgument
 import com.scrapeverything.app.data.local.TokenStorage
+import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.auth.LoginScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
 import com.scrapeverything.app.ui.member.MyPageScreen
@@ -18,8 +20,18 @@ import com.scrapeverything.app.ui.splash.SplashScreen
 @Composable
 fun NavGraph(
     navController: NavHostController,
-    tokenStorage: TokenStorage
+    tokenStorage: TokenStorage,
+    sessionManager: SessionManager
 ) {
+    // 세션 만료 시 로그인 화면으로 이동
+    LaunchedEffect(Unit) {
+        sessionManager.sessionExpiredEvent.collect {
+            navController.navigate(Route.Login.route) {
+                popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
     NavHost(
         navController = navController,
         startDestination = Route.Splash.route
