@@ -1,4 +1,0 @@
--keep,allowobfuscation,allowshrinking class com.scrapeverything.app.ui.category.CategoryListViewModel
--keep,allowobfuscation,allowshrinking class com.scrapeverything.app.ui.category.CategoryListViewModel
--keep,allowobfuscation,allowshrinking class com.scrapeverything.app.ui.auth.LoginViewModel
--keep,allowobfuscation,allowshrinking class com.scrapeverything.app.ui.auth.LoginViewModel

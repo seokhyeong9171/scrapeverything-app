@@ -2,6 +2,7 @@ package com.scrapeverything.app.ui.navigation
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Modifier
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.navigation.NavHostController
 import androidx.navigation.NavType
@@ -25,7 +26,8 @@ import com.scrapeverything.app.ui.splash.SplashScreen
 fun NavGraph(
     navController: NavHostController,
     tokenStorage: TokenStorage,
-    sessionManager: SessionManager
+    sessionManager: SessionManager,
+    modifier: Modifier = Modifier
 ) {
     // 세션 만료 시 로그인 화면으로 이동
     LaunchedEffect(Unit) {
@@ -38,7 +40,8 @@ fun NavGraph(
 
     NavHost(
         navController = navController,
-        startDestination = Route.Splash.route
+        startDestination = Route.Splash.route,
+        modifier = modifier
     ) {
         // 스플래시
         composable(Route.Splash.route) {

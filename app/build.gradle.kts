@@ -1,9 +1,16 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
+}
+
+val localProperties = Properties().apply {
+    val file = rootProject.file("local.properties")
+    if (file.exists()) file.inputStream().use { load(it) }
 }
 
 android {
@@ -18,6 +25,14 @@ android {
         versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        manifestPlaceholders["ADMOB_APP_ID"] =
+            localProperties.getProperty("ADMOB_APP_ID", "")
+        buildConfigField(
+            "String",
+            "ADMOB_BANNER_ID",
+            "\"${localProperties.getProperty("ADMOB_BANNER_ID", "")}\""
+        )
     }
 
     buildTypes {
@@ -38,6 +53,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 }
 
@@ -77,6 +93,9 @@ dependencies {
 
     // Image Loading
     implementation(libs.coil.compose)
+
+    // Google Mobile Ads
+    implementation(libs.play.services.ads)
 
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
