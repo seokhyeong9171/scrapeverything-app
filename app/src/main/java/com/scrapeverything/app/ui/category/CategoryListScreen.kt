@@ -83,7 +83,7 @@ fun CategoryListScreen(
                 title = {
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Image(
-                            painter = painterResource(id = R.drawable.ic_launcher_foreground),
+                            painter = painterResource(id = R.drawable.ic_logo),
                             contentDescription = "앱 로고",
                             modifier = Modifier
                                 .size(32.dp)

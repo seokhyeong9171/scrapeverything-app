@@ -206,9 +206,9 @@ private fun ScrapListItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (!scrap.url.isNullOrBlank()) {
+                if (!scrap.description.isNullOrBlank()) {
                     Text(
-                        text = scrap.url,
+                        text = scrap.description,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
@@ -217,11 +217,15 @@ private fun ScrapListItem(
                 }
             }
             Box {
-                IconButton(onClick = { showMenu = true }) {
+                IconButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(
                         Icons.Filled.MoreVert,
                         contentDescription = "더보기",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 DropdownMenu(

@@ -11,7 +11,7 @@ data class ScrapListResponse(
 data class ScrapItem(
     val scrapId: Long,
     val scrapTitle: String,
-    val url: String? = null
+    val description: String? = null
 )
 
 data class ScrapDetailResponse(

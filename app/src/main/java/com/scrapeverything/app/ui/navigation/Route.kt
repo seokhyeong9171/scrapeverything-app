@@ -18,9 +18,6 @@ sealed class Route(val route: String) {
     object ScrapEdit : Route("scraps/{scrapId}/edit") {
         fun createRoute(scrapId: Long): String = "scraps/$scrapId/edit"
     }
-    object ScrapAddFromShare : Route("scraps/add/share?sharedUrl={sharedUrl}") {
-        fun createRoute(sharedUrl: String): String =
-            "scraps/add/share?sharedUrl=${java.net.URLEncoder.encode(sharedUrl, "UTF-8")}"
-    }
+    object ScrapAddFromShare : Route("scraps/add/share")
     object MyPage : Route("mypage")
 }

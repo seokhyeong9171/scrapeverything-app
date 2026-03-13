@@ -1,5 +1,10 @@
 package com.scrapeverything.app.ui.navigation
 
+import androidx.compose.animation.EnterTransition
+import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -46,7 +51,7 @@ fun NavGraph(
         if (!sharedUrl.isNullOrBlank()) {
             val currentRoute = navController.currentDestination?.route
             if (currentRoute != null && currentRoute != Route.Splash.route) {
-                navController.navigate(Route.ScrapAddFromShare.createRoute(sharedUrl))
+                navController.navigate(Route.ScrapAddFromShare.route)
                 onSharedUrlConsumed()
             }
         }
@@ -55,7 +60,11 @@ fun NavGraph(
     NavHost(
         navController = navController,
         startDestination = Route.Splash.route,
-        modifier = modifier
+        modifier = modifier,
+        enterTransition = { fadeIn(animationSpec = tween(150)) },
+        exitTransition = { fadeOut(animationSpec = tween(150)) },
+        popEnterTransition = { fadeIn(animationSpec = tween(150)) },
+        popExitTransition = { fadeOut(animationSpec = tween(150)) }
     ) {
         // 스플래시
         composable(Route.Splash.route) {
@@ -71,7 +80,7 @@ fun NavGraph(
                         popUpTo(Route.Splash.route) { inclusive = true }
                     }
                     if (!sharedUrl.isNullOrBlank()) {
-                        navController.navigate(Route.ScrapAddFromShare.createRoute(sharedUrl))
+                        navController.navigate(Route.ScrapAddFromShare.route)
                         onSharedUrlConsumed()
                     }
                 }
@@ -150,6 +159,16 @@ fun NavGraph(
                     }
             }
 
+            LaunchedEffect(backStackEntry) {
+                backStackEntry.savedStateHandle.getStateFlow("scrapEdited", false)
+                    .collect { edited ->
+                        if (edited) {
+                            backStackEntry.savedStateHandle["scrapEdited"] = false
+                            viewModel.refresh()
+                        }
+                    }
+            }
+
             ScrapListScreen(
                 onNavigateToScrapDetail = { scrapId ->
                     navController.navigate(Route.ScrapDetail.createRoute(scrapId))
@@ -184,7 +203,19 @@ fun NavGraph(
             arguments = listOf(
                 navArgument("scrapId") { type = NavType.LongType }
             )
-        ) {
+        ) { backStackEntry ->
+            // ScrapEdit에서 수정 완료 시 ScrapList로 플래그 전파
+            LaunchedEffect(backStackEntry) {
+                backStackEntry.savedStateHandle.getStateFlow("scrapEdited", false)
+                    .collect { edited ->
+                        if (edited) {
+                            backStackEntry.savedStateHandle["scrapEdited"] = false
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle?.set("scrapEdited", true)
+                        }
+                    }
+            }
+
             ScrapDetailScreen(
                 onNavigateBack = { navController.popBackStack() },
                 onDeleteSuccess = {
@@ -205,24 +236,24 @@ fun NavGraph(
             )
         ) {
             ScrapEditScreen(
-                onNavigateBack = { navController.popBackStack() }
+                onNavigateBack = { navController.popBackStack() },
+                onSaveSuccess = {
+                    // ScrapDetail의 previousBackStackEntry = ScrapList
+                    navController.previousBackStackEntry
+                        ?.savedStateHandle?.set("scrapEdited", true)
+                    navController.popBackStack()
+                }
             )
         }
 
         // 외부 공유로 스크랩 추가
-        composable(
-            route = Route.ScrapAddFromShare.route,
-            arguments = listOf(
-                navArgument("sharedUrl") {
-                    type = NavType.StringType
-                    defaultValue = ""
-                }
-            )
-        ) {
+        composable(route = Route.ScrapAddFromShare.route) {
             ScrapAddFromShareScreen(
                 onNavigateBack = { navController.popBackStack() },
-                onSaveSuccess = {
-                    navController.popBackStack()
+                onSaveSuccess = { categoryId, categoryName ->
+                    navController.navigate(Route.ScrapList.createRoute(categoryId, categoryName)) {
+                        popUpTo(Route.CategoryList.route) { inclusive = false }
+                    }
                 }
             )
         }

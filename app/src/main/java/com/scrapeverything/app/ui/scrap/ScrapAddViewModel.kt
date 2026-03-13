@@ -3,6 +3,8 @@ package com.scrapeverything.app.ui.scrap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scrapeverything.app.data.model.response.CategoryItem
+import com.scrapeverything.app.data.repository.CategoryRepository
 import com.scrapeverything.app.data.repository.ScrapRepository
 import com.scrapeverything.app.network.ApiResult
 import com.scrapeverything.app.util.ErrorMessages
@@ -18,10 +20,13 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ScrapAddUiState(
+    val categories: List<CategoryItem> = emptyList(),
+    val selectedCategory: CategoryItem? = null,
     val scrapTitle: String = "",
     val url: String = "",
     val description: String = "",
-    val isSaving: Boolean = false
+    val isSaving: Boolean = false,
+    val isLoadingCategories: Boolean = true
 )
 
 sealed class ScrapAddEvent {
@@ -32,16 +37,52 @@ sealed class ScrapAddEvent {
 @HiltViewModel
 class ScrapAddViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
+    private val categoryRepository: CategoryRepository,
     private val scrapRepository: ScrapRepository
 ) : ViewModel() {
 
-    private val categoryId: Long = savedStateHandle["categoryId"] ?: 0L
+    private val initialCategoryId: Long = savedStateHandle["categoryId"] ?: 0L
 
     private val _uiState = MutableStateFlow(ScrapAddUiState())
     val uiState: StateFlow<ScrapAddUiState> = _uiState.asStateFlow()
 
     private val _event = MutableSharedFlow<ScrapAddEvent>()
     val event: SharedFlow<ScrapAddEvent> = _event.asSharedFlow()
+
+    init {
+        loadCategories()
+    }
+
+    private fun loadCategories() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingCategories = true) }
+            when (val result = categoryRepository.getAllCategories()) {
+                is ApiResult.Success -> {
+                    val selected = result.data.find { it.categoryId == initialCategoryId }
+                        ?: result.data.firstOrNull()
+                    _uiState.update {
+                        it.copy(
+                            categories = result.data,
+                            selectedCategory = selected,
+                            isLoadingCategories = false
+                        )
+                    }
+                }
+                is ApiResult.Error -> {
+                    _uiState.update { it.copy(isLoadingCategories = false) }
+                    _event.emit(ScrapAddEvent.ShowSnackbar(ErrorMessages.getMessage(result.code)))
+                }
+                is ApiResult.NetworkError -> {
+                    _uiState.update { it.copy(isLoadingCategories = false) }
+                    _event.emit(ScrapAddEvent.ShowSnackbar("네트워크 연결을 확인해주세요"))
+                }
+            }
+        }
+    }
+
+    fun onCategorySelected(category: CategoryItem) {
+        _uiState.update { it.copy(selectedCategory = category) }
+    }
 
     fun onTitleChanged(title: String) {
         _uiState.update { it.copy(scrapTitle = title) }
@@ -57,6 +98,12 @@ class ScrapAddViewModel @Inject constructor(
 
     fun saveScrap() {
         val state = _uiState.value
+        if (state.selectedCategory == null) {
+            viewModelScope.launch {
+                _event.emit(ScrapAddEvent.ShowSnackbar("카테고리를 선택해주세요"))
+            }
+            return
+        }
         if (state.scrapTitle.isBlank()) {
             viewModelScope.launch {
                 _event.emit(ScrapAddEvent.ShowSnackbar("제목을 입력해주세요"))
@@ -74,7 +121,7 @@ class ScrapAddViewModel @Inject constructor(
             _uiState.update { it.copy(isSaving = true) }
 
             when (val result = scrapRepository.addScrap(
-                categoryId = categoryId,
+                categoryId = state.selectedCategory.categoryId,
                 title = state.scrapTitle,
                 url = state.url,
                 description = state.description.ifBlank { null }

@@ -22,6 +22,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.compose.rememberNavController
 import com.google.android.gms.ads.MobileAds
+import com.scrapeverything.app.data.local.SharedUrlHolder
 import com.scrapeverything.app.data.local.ThemeMode
 import com.scrapeverything.app.data.local.ThemePreferences
 import com.scrapeverything.app.data.local.TokenStorage
@@ -45,18 +46,31 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var themePreferences: ThemePreferences
 
+    @Inject
+    lateinit var sharedUrlHolder: SharedUrlHolder
+
     private var sharedUrl by mutableStateOf<String?>(null)
 
-    private fun extractSharedUrl(intent: Intent?): String? {
+    private fun extractAndStoreSharedUrl(intent: Intent?): String? {
         if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
-            return intent.getStringExtra(Intent.EXTRA_TEXT)
+            val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
+            val url = extractUrlFromText(text)
+            if (url != null) {
+                sharedUrlHolder.url = url
+            }
+            return url
         }
         return null
     }
 
+    private fun extractUrlFromText(text: String): String? {
+        val urlPattern = Regex("https?://\\S+")
+        return urlPattern.find(text)?.value
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
-        extractSharedUrl(intent)?.let { url ->
+        extractAndStoreSharedUrl(intent)?.let { url ->
             sharedUrl = url
         }
     }
@@ -66,7 +80,7 @@ class MainActivity : ComponentActivity() {
         MobileAds.initialize(this)
         enableEdgeToEdge()
 
-        sharedUrl = extractSharedUrl(intent)
+        sharedUrl = extractAndStoreSharedUrl(intent)
 
         setContent {
             val themeMode by themePreferences.themeModeFlow.collectAsState()

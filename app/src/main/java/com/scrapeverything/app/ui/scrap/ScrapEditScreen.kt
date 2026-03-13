@@ -19,6 +19,7 @@ import com.scrapeverything.app.ui.component.FullScreenLoading
 @Composable
 fun ScrapEditScreen(
     onNavigateBack: () -> Unit,
+    onSaveSuccess: () -> Unit = onNavigateBack,
     viewModel: ScrapEditViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -31,7 +32,7 @@ fun ScrapEditScreen(
                     snackbarHostState.showSnackbar(event.message)
                 }
                 is ScrapEditEvent.SaveSuccess -> {
-                    onNavigateBack()
+                    onSaveSuccess()
                 }
             }
         }
