@@ -2,6 +2,8 @@ package com.scrapeverything.app.ui.member
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scrapeverything.app.data.local.ThemeMode
+import com.scrapeverything.app.data.local.ThemePreferences
 import com.scrapeverything.app.data.repository.AuthRepository
 import com.scrapeverything.app.data.repository.MemberRepository
 import com.scrapeverything.app.network.ApiResult
@@ -25,7 +27,8 @@ data class MyPageUiState(
     val error: String? = null,
     val showEditNicknameDialog: Boolean = false,
     val showLogoutDialog: Boolean = false,
-    val showWithdrawDialog: Boolean = false
+    val showWithdrawDialog: Boolean = false,
+    val selectedThemeMode: ThemeMode = ThemeMode.AUTO
 )
 
 sealed class MyPageEvent {
@@ -36,10 +39,13 @@ sealed class MyPageEvent {
 @HiltViewModel
 class MyPageViewModel @Inject constructor(
     private val memberRepository: MemberRepository,
-    private val authRepository: AuthRepository
+    private val authRepository: AuthRepository,
+    private val themePreferences: ThemePreferences
 ) : ViewModel() {
 
-    private val _uiState = MutableStateFlow(MyPageUiState())
+    private val _uiState = MutableStateFlow(
+        MyPageUiState(selectedThemeMode = themePreferences.getThemeMode())
+    )
     val uiState: StateFlow<MyPageUiState> = _uiState.asStateFlow()
 
     private val _event = MutableSharedFlow<MyPageEvent>()
@@ -123,6 +129,11 @@ class MyPageViewModel @Inject constructor(
                 }
             }
         }
+    }
+
+    fun setThemeMode(mode: ThemeMode) {
+        themePreferences.setThemeMode(mode)
+        _uiState.update { it.copy(selectedThemeMode = mode) }
     }
 
     fun showEditNicknameDialog() {

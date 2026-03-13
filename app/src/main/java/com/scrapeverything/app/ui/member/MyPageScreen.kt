@@ -2,6 +2,7 @@ package com.scrapeverything.app.ui.member
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
@@ -15,9 +16,11 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scrapeverything.app.data.local.ThemeMode
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.ErrorView
 import com.scrapeverything.app.ui.component.FullScreenLoading
@@ -168,6 +171,20 @@ fun MyPageScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // 화면 모드 설정
+                    Text(
+                        text = "화면 모드",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ThemeModeSelector(
+                        selectedMode = uiState.selectedThemeMode,
+                        onModeSelected = { viewModel.setThemeMode(it) }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     // 로그아웃 버튼
                     OutlinedButton(
                         onClick = { viewModel.showLogoutDialog() },
@@ -265,6 +282,33 @@ private fun NicknameEditDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ThemeModeSelector(
+    selectedMode: ThemeMode,
+    onModeSelected: (ThemeMode) -> Unit
+) {
+    val options = listOf(
+        ThemeMode.LIGHT to "라이트",
+        ThemeMode.DARK to "다크",
+        ThemeMode.AUTO to "자동"
+    )
+
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (mode, label) ->
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = options.size
+                ),
+                selected = selectedMode == mode,
+                onClick = { onModeSelected(mode) }
+            ) {
+                Text(label)
+            }
+        }
+    }
 }
 
 private fun formatDate(dateTimeStr: String): String {
