@@ -28,11 +28,20 @@ android {
 
         manifestPlaceholders["ADMOB_APP_ID"] =
             localProperties.getProperty("ADMOB_APP_ID", "")
+
+        val serverUrl = localProperties.getProperty("SERVER_URL", "http://10.0.2.2:8080/")
+        buildConfigField("String", "SERVER_URL", "\"$serverUrl\"")
         buildConfigField(
             "String",
             "ADMOB_BANNER_ID",
             "\"${localProperties.getProperty("ADMOB_BANNER_ID", "")}\""
         )
+
+        // network_security_config에서 사용할 서버 호스트
+        val serverHost = serverUrl
+            .removePrefix("http://").removePrefix("https://")
+            .removeSuffix("/").substringBefore(":")
+        manifestPlaceholders["SERVER_HOST"] = serverHost
     }
 
     buildTypes {
