@@ -10,7 +10,8 @@ data class ScrapListResponse(
 
 data class ScrapItem(
     val scrapId: Long,
-    val scrapTitle: String
+    val scrapTitle: String,
+    val url: String? = null
 )
 
 data class ScrapDetailResponse(
