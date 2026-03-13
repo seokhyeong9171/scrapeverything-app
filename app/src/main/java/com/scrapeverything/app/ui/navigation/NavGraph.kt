@@ -16,6 +16,7 @@ import com.scrapeverything.app.ui.auth.LoginScreen
 import com.scrapeverything.app.ui.auth.RegisterScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
 import com.scrapeverything.app.ui.member.MyPageScreen
+import com.scrapeverything.app.ui.scrap.ScrapAddFromShareScreen
 import com.scrapeverything.app.ui.scrap.ScrapAddScreen
 import com.scrapeverything.app.ui.scrap.ScrapDetailScreen
 import com.scrapeverything.app.ui.scrap.ScrapEditScreen
@@ -27,6 +28,8 @@ fun NavGraph(
     navController: NavHostController,
     tokenStorage: TokenStorage,
     sessionManager: SessionManager,
+    sharedUrl: String? = null,
+    onSharedUrlConsumed: () -> Unit = {},
     modifier: Modifier = Modifier
 ) {
     // 세션 만료 시 로그인 화면으로 이동
@@ -34,6 +37,17 @@ fun NavGraph(
         sessionManager.sessionExpiredEvent.collect {
             navController.navigate(Route.Login.route) {
                 popUpTo(0) { inclusive = true }
+            }
+        }
+    }
+
+    // 앱이 이미 실행 중일 때 외부 공유 처리 (onNewIntent)
+    LaunchedEffect(sharedUrl) {
+        if (!sharedUrl.isNullOrBlank()) {
+            val currentRoute = navController.currentDestination?.route
+            if (currentRoute != null && currentRoute != Route.Splash.route) {
+                navController.navigate(Route.ScrapAddFromShare.createRoute(sharedUrl))
+                onSharedUrlConsumed()
             }
         }
     }
@@ -55,6 +69,10 @@ fun NavGraph(
                 onNavigateToMain = {
                     navController.navigate(Route.CategoryList.route) {
                         popUpTo(Route.Splash.route) { inclusive = true }
+                    }
+                    if (!sharedUrl.isNullOrBlank()) {
+                        navController.navigate(Route.ScrapAddFromShare.createRoute(sharedUrl))
+                        onSharedUrlConsumed()
                     }
                 }
             )
@@ -188,6 +206,24 @@ fun NavGraph(
         ) {
             ScrapEditScreen(
                 onNavigateBack = { navController.popBackStack() }
+            )
+        }
+
+        // 외부 공유로 스크랩 추가
+        composable(
+            route = Route.ScrapAddFromShare.route,
+            arguments = listOf(
+                navArgument("sharedUrl") {
+                    type = NavType.StringType
+                    defaultValue = ""
+                }
+            )
+        ) {
+            ScrapAddFromShareScreen(
+                onNavigateBack = { navController.popBackStack() },
+                onSaveSuccess = {
+                    navController.popBackStack()
+                }
             )
         }
 
