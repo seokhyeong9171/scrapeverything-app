@@ -1,5 +1,6 @@
 package com.scrapeverything.app.ui.member
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -16,8 +17,12 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scrapeverything.app.data.local.ThemeMode
@@ -211,6 +216,29 @@ fun MyPageScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    val context = LocalContext.current
+                    val contactEmail = "scrapeverything1234@gmail.com"
+                    Text(
+                        text = "문의 : $contactEmail",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            textDecoration = TextDecoration.Underline
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = Uri.parse("mailto:$contactEmail")
+                                    putExtra(Intent.EXTRA_SUBJECT, "[조각모음] 문의")
+                                }
+                                context.startActivity(intent)
+                            }
+                            .padding(vertical = 16.dp)
+                    )
                 }
             }
         }
