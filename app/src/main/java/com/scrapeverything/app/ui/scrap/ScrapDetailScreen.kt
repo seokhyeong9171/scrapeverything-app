@@ -24,6 +24,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.ErrorView
 import com.scrapeverything.app.ui.component.FullScreenLoading
+import com.scrapeverything.app.ui.component.OgPreviewCard
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -186,6 +187,16 @@ fun ScrapDetailScreen(
                                 tint = MaterialTheme.colorScheme.onPrimaryContainer
                             )
                         }
+                    }
+
+                    // OG 미리보기
+                    if (detail.ogTitle != null || detail.ogDescription != null || detail.ogImageUrl != null) {
+                        Spacer(modifier = Modifier.height(12.dp))
+                        OgPreviewCard(
+                            ogTitle = detail.ogTitle,
+                            ogDescription = detail.ogDescription,
+                            ogImageUrl = detail.ogImageUrl
+                        )
                     }
 
                     // 설명

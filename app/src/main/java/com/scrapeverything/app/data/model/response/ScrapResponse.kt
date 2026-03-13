@@ -19,6 +19,9 @@ data class ScrapDetailResponse(
     val scrapTitle: String,
     val url: String,
     val description: String?,
+    val ogTitle: String?,
+    val ogDescription: String?,
+    val ogImageUrl: String?,
     val createdAt: String,
     val updatedAt: String
 )
