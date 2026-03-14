@@ -34,9 +34,7 @@ import com.scrapeverything.app.data.local.ThemePreferences
 import com.scrapeverything.app.data.local.TokenStorage
 import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.component.AdBanner
-import com.scrapeverything.app.ui.component.UpdateDialog
 import com.scrapeverything.app.ui.navigation.NavGraph
-import com.scrapeverything.app.ui.navigation.Route
 import com.scrapeverything.app.ui.theme.ScrapEverythingTheme
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
@@ -57,35 +55,40 @@ class MainActivity : ComponentActivity() {
     lateinit var sharedUrlHolder: SharedUrlHolder
 
     private var sharedUrl by mutableStateOf<String?>(null)
-    private var showUpdateDialog by mutableStateOf(false)
 
     private val appUpdateManager by lazy { AppUpdateManagerFactory.create(this) }
 
     private val updateLauncher = registerForActivityResult(
         ActivityResultContracts.StartIntentSenderForResult()
-    ) { /* 업데이트 플로우 완료 또는 취소 */ }
-
-    private fun checkForUpdate() {
-        appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
-                && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
-            ) {
-                showUpdateDialog = true
-            }
-        }.addOnFailureListener { e ->
-            Log.d("InAppUpdate", "Update check failed: ${e.message}")
+    ) { result ->
+        if (result.resultCode != RESULT_OK) {
+            // 사용자가 업데이트를 취소하면 다시 강제 업데이트 요청
+            checkForUpdate()
         }
     }
 
-    private fun startUpdate() {
+    private fun checkForUpdate() {
         appUpdateManager.appUpdateInfo.addOnSuccessListener { appUpdateInfo ->
-            if (appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE) {
-                appUpdateManager.startUpdateFlowForResult(
-                    appUpdateInfo,
-                    updateLauncher,
-                    AppUpdateOptions.newBuilder(AppUpdateType.FLEXIBLE).build()
-                )
+            when {
+                appUpdateInfo.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                    && appUpdateInfo.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE) -> {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        updateLauncher,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                    )
+                }
+                // 업데이트 중이었는데 앱이 재시작된 경우 이어서 진행
+                appUpdateInfo.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS -> {
+                    appUpdateManager.startUpdateFlowForResult(
+                        appUpdateInfo,
+                        updateLauncher,
+                        AppUpdateOptions.newBuilder(AppUpdateType.IMMEDIATE).build()
+                    )
+                }
             }
+        }.addOnFailureListener { e ->
+            Log.d("InAppUpdate", "Update check failed: ${e.message}")
         }
     }
 
@@ -104,6 +107,12 @@ class MainActivity : ComponentActivity() {
     private fun extractUrlFromText(text: String): String? {
         val urlPattern = Regex("https?://\\S+")
         return urlPattern.find(text)?.value
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // 앱이 포그라운드로 돌아왔을 때 업데이트가 진행 중이면 이어서 처리
+        checkForUpdate()
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -165,15 +174,6 @@ class MainActivity : ComponentActivity() {
                         AdBanner()
                     }
 
-                    if (showUpdateDialog) {
-                        UpdateDialog(
-                            onUpdate = {
-                                showUpdateDialog = false
-                                startUpdate()
-                            },
-                            onDismiss = { showUpdateDialog = false }
-                        )
-                    }
                 }
             }
         }

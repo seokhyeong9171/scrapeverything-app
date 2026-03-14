@@ -20,6 +20,7 @@ import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.auth.LoginScreen
 import com.scrapeverything.app.ui.auth.RegisterScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
+import com.scrapeverything.app.ui.category.CategoryListViewModel
 import com.scrapeverything.app.ui.member.MyPageScreen
 import com.scrapeverything.app.ui.notice.NoticeScreen
 import com.scrapeverything.app.ui.scrap.ScrapAddFromShareScreen
@@ -115,14 +116,27 @@ fun NavGraph(
         }
 
         // 메인 - 카테고리 목록
-        composable(Route.CategoryList.route) {
+        composable(Route.CategoryList.route) { backStackEntry ->
+            val viewModel: CategoryListViewModel = hiltViewModel()
+
+            LaunchedEffect(backStackEntry) {
+                backStackEntry.savedStateHandle.getStateFlow("scrapCountChanged", false)
+                    .collect { changed ->
+                        if (changed) {
+                            backStackEntry.savedStateHandle["scrapCountChanged"] = false
+                            viewModel.refreshScrapCounts()
+                        }
+                    }
+            }
+
             CategoryListScreen(
                 onNavigateToScrapList = { categoryId, categoryName ->
                     navController.navigate(Route.ScrapList.createRoute(categoryId, categoryName))
                 },
                 onNavigateToMyPage = {
                     navController.navigate(Route.MyPage.route)
-                }
+                },
+                viewModel = viewModel
             )
         }
 
@@ -145,6 +159,8 @@ fun NavGraph(
                         if (added) {
                             backStackEntry.savedStateHandle["scrapAdded"] = false
                             viewModel.refresh()
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle?.set("scrapCountChanged", true)
                         }
                     }
             }
@@ -156,6 +172,8 @@ fun NavGraph(
                             backStackEntry.savedStateHandle["scrapDeleted"] = false
                             viewModel.refresh()
                             viewModel.showMessage("스크랩이 삭제되었습니다")
+                            navController.previousBackStackEntry
+                                ?.savedStateHandle?.set("scrapCountChanged", true)
                         }
                     }
             }

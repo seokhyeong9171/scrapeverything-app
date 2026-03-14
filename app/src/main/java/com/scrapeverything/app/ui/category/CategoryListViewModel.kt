@@ -166,6 +166,10 @@ class CategoryListViewModel @Inject constructor(
         }
     }
 
+    fun refreshScrapCounts() {
+        loadScrapCounts(_uiState.value.categories)
+    }
+
     private fun loadScrapCounts(categories: List<CategoryWithCount>) {
         viewModelScope.launch {
             categories.forEach { category ->
