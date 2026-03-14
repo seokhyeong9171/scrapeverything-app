@@ -19,6 +19,7 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
+import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -44,11 +45,24 @@ fun CategoryListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
+    val scope = rememberCoroutineScope()
 
-    // 메인 화면에서 뒤로가기 시 앱 종료
+    // 메인 화면에서 뒤로가기 두 번 눌러 종료
     val activity = LocalContext.current as? Activity
+    var backPressedOnce by remember { mutableStateOf(false) }
     BackHandler {
-        activity?.finish()
+        if (backPressedOnce) {
+            activity?.finish()
+        } else {
+            backPressedOnce = true
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    message = "뒤로가기 버튼을 한 번 더 누르면 종료됩니다",
+                    duration = SnackbarDuration.Short
+                )
+                backPressedOnce = false
+            }
+        }
     }
 
     // 이벤트 수신
