@@ -21,6 +21,7 @@ import com.scrapeverything.app.ui.auth.LoginScreen
 import com.scrapeverything.app.ui.auth.RegisterScreen
 import com.scrapeverything.app.ui.category.CategoryListScreen
 import com.scrapeverything.app.ui.member.MyPageScreen
+import com.scrapeverything.app.ui.notice.NoticeScreen
 import com.scrapeverything.app.ui.scrap.ScrapAddFromShareScreen
 import com.scrapeverything.app.ui.scrap.ScrapAddScreen
 import com.scrapeverything.app.ui.scrap.ScrapDetailScreen
@@ -266,7 +267,17 @@ fun NavGraph(
                     navController.navigate(Route.Login.route) {
                         popUpTo(Route.CategoryList.route) { inclusive = true }
                     }
+                },
+                onNavigateToNotice = {
+                    navController.navigate(Route.Notice.route)
                 }
+            )
+        }
+
+        // 공지사항
+        composable(Route.Notice.route) {
+            NoticeScreen(
+                onNavigateBack = { navController.popBackStack() }
             )
         }
     }

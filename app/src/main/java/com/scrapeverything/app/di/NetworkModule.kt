@@ -3,6 +3,7 @@ package com.scrapeverything.app.di
 import com.scrapeverything.app.data.api.AuthApi
 import com.scrapeverything.app.data.api.CategoryApi
 import com.scrapeverything.app.data.api.MemberApi
+import com.scrapeverything.app.data.api.NoticeApi
 import com.scrapeverything.app.data.api.ScrapApi
 import com.scrapeverything.app.network.AuthInterceptor
 import com.scrapeverything.app.network.RefreshInterceptor
@@ -84,5 +85,11 @@ object NetworkModule {
     @Singleton
     fun provideMemberApi(retrofit: Retrofit): MemberApi {
         return retrofit.create(MemberApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNoticeApi(retrofit: Retrofit): NoticeApi {
+        return retrofit.create(NoticeApi::class.java)
     }
 }

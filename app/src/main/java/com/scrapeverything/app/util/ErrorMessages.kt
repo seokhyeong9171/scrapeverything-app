@@ -19,6 +19,7 @@ object ErrorMessages {
         "CATEGORY_HAS_SCRAP" -> "스크랩이 있는 카테고리는 삭제할 수 없습니다"
         "SCRAP_NOT_FOUND" -> "스크랩을 찾을 수 없습니다"
         "SCRAP_MEMBER_NOT_MATCH" -> "접근 권한이 없습니다"
+        "CONTAINS_FORBIDDEN_WORD" -> "사용할 수 없는 단어가 포함되어 있습니다"
         "400" -> "잘못된 요청입니다"
         "401" -> "로그인이 필요합니다"
         "409" -> "이미 존재하는 값입니다"

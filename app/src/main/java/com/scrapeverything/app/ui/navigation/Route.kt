@@ -20,4 +20,5 @@ sealed class Route(val route: String) {
     }
     object ScrapAddFromShare : Route("scraps/add/share")
     object MyPage : Route("mypage")
+    object Notice : Route("notice")
 }
