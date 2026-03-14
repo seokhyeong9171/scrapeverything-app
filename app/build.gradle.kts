@@ -44,13 +44,24 @@ android {
         manifestPlaceholders["SERVER_HOST"] = serverHost
     }
 
+    signingConfigs {
+        create("release") {
+            storeFile = file(localProperties.getProperty("STORE_FILE", ""))
+            storePassword = localProperties.getProperty("STORE_PASSWORD", "")
+            keyAlias = localProperties.getProperty("KEY_ALIAS", "")
+            keyPassword = localProperties.getProperty("KEY_PASSWORD", "")
+        }
+    }
+
     buildTypes {
         release {
-            isMinifyEnabled = false
+            isMinifyEnabled = true
+            isShrinkResources = true
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("release")
         }
     }
     compileOptions {
