@@ -26,6 +26,9 @@ playServicesAds = "24.1.0"
 # Image Loading
 coil = "2.7.0"
 
+# In-App Update
+playAppUpdate = "2.1.0"
+
 # Coroutines
 coroutines = "1.9.0"
 
@@ -68,6 +71,10 @@ play-services-ads = { group = "com.google.android.gms", name = "play-services-ad
 
 # Image Loading
 coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# In-App Update
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }

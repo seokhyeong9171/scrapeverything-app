@@ -106,6 +106,10 @@ dependencies {
     // Google Mobile Ads
     implementation(libs.play.services.ads)
 
+    // In-App Update
+    implementation(libs.play.app.update)
+    implementation(libs.play.app.update.ktx)
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 }
