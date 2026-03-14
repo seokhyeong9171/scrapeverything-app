@@ -3,6 +3,7 @@ package com.scrapeverything.app.di
 import com.scrapeverything.app.data.api.AuthApi
 import com.scrapeverything.app.data.api.CategoryApi
 import com.scrapeverything.app.data.api.MemberApi
+import com.scrapeverything.app.data.api.NoticeApi
 import com.scrapeverything.app.data.api.ScrapApi
 import com.scrapeverything.app.network.AuthInterceptor
 import com.scrapeverything.app.network.RefreshInterceptor
@@ -13,6 +14,7 @@ import dagger.hilt.InstallIn
 import dagger.hilt.components.SingletonComponent
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import com.scrapeverything.app.BuildConfig
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 import java.util.concurrent.TimeUnit
@@ -22,7 +24,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 object NetworkModule {
 
-    private const val BASE_URL = "http://10.0.2.2:8080/"
+    private const val BASE_URL = BuildConfig.SERVER_URL
 
     @Provides
     @Singleton
@@ -83,5 +85,11 @@ object NetworkModule {
     @Singleton
     fun provideMemberApi(retrofit: Retrofit): MemberApi {
         return retrofit.create(MemberApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideNoticeApi(retrofit: Retrofit): NoticeApi {
+        return retrofit.create(NoticeApi::class.java)
     }
 }

@@ -77,7 +77,6 @@ class ScrapDetailViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = scrapRepository.deleteScrap(scrapId)) {
                 is ApiResult.Success -> {
-                    _event.emit(ScrapDetailEvent.ShowSnackbar("스크랩이 삭제되었습니다"))
                     _event.emit(ScrapDetailEvent.NavigateBack)
                 }
                 is ApiResult.Error -> {

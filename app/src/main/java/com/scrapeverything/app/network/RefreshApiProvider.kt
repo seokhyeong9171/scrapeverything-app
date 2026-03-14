@@ -1,5 +1,6 @@
 package com.scrapeverything.app.network
 
+import com.scrapeverything.app.BuildConfig
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import okhttp3.Response
@@ -17,11 +18,7 @@ class RefreshApiProvider @Inject constructor() {
         OkHttpClient.Builder().build()
     }
 
-    private var baseUrl: String = "http://10.0.2.2:8080/"
-
-    fun setBaseUrl(url: String) {
-        baseUrl = url
-    }
+    private val baseUrl: String = BuildConfig.SERVER_URL
 
     fun getRefreshApi(): Request {
         return Request.Builder()

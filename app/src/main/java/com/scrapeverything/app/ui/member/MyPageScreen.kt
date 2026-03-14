@@ -1,11 +1,15 @@
 package com.scrapeverything.app.ui.member
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Email
 import androidx.compose.material.icons.outlined.Person
@@ -15,9 +19,15 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.dp
+import android.content.Intent
+import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scrapeverything.app.data.local.ThemeMode
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.ErrorView
 import com.scrapeverything.app.ui.component.FullScreenLoading
@@ -27,6 +37,7 @@ import com.scrapeverything.app.ui.component.FullScreenLoading
 fun MyPageScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    onNavigateToNotice: () -> Unit = {},
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -168,6 +179,58 @@ fun MyPageScreen(
 
                     Spacer(modifier = Modifier.height(24.dp))
 
+                    // 공지사항 버튼
+                    Card(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable(onClick = onNavigateToNotice),
+                        colors = CardDefaults.cardColors(
+                            containerColor = MaterialTheme.colorScheme.surfaceVariant
+                        )
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 14.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            Icon(
+                                Icons.Outlined.Campaign,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.primary,
+                                modifier = Modifier.size(20.dp)
+                            )
+                            Spacer(modifier = Modifier.width(12.dp))
+                            Text(
+                                text = "공지사항",
+                                style = MaterialTheme.typography.bodyLarge,
+                                modifier = Modifier.weight(1f)
+                            )
+                            Icon(
+                                Icons.AutoMirrored.Filled.ArrowForwardIos,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.size(16.dp)
+                            )
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
+                    // 화면 모드 설정
+                    Text(
+                        text = "화면 모드",
+                        style = MaterialTheme.typography.titleMedium,
+                        fontWeight = FontWeight.Bold
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    ThemeModeSelector(
+                        selectedMode = uiState.selectedThemeMode,
+                        onModeSelected = { viewModel.setThemeMode(it) }
+                    )
+
+                    Spacer(modifier = Modifier.height(24.dp))
+
                     // 로그아웃 버튼
                     OutlinedButton(
                         onClick = { viewModel.showLogoutDialog() },
@@ -194,6 +257,29 @@ fun MyPageScreen(
                             color = MaterialTheme.colorScheme.error
                         )
                     }
+
+                    Spacer(modifier = Modifier.weight(1f))
+
+                    val context = LocalContext.current
+                    val contactEmail = "scrapeverything1234@gmail.com"
+                    Text(
+                        text = "문의 : $contactEmail",
+                        style = MaterialTheme.typography.bodyMedium.copy(
+                            textDecoration = TextDecoration.Underline
+                        ),
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable {
+                                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                                    data = Uri.parse("mailto:$contactEmail")
+                                    putExtra(Intent.EXTRA_SUBJECT, "[조각모음] 문의")
+                                }
+                                context.startActivity(intent)
+                            }
+                            .padding(vertical = 16.dp)
+                    )
                 }
             }
         }
@@ -265,6 +351,33 @@ private fun NicknameEditDialog(
             }
         }
     )
+}
+
+@Composable
+private fun ThemeModeSelector(
+    selectedMode: ThemeMode,
+    onModeSelected: (ThemeMode) -> Unit
+) {
+    val options = listOf(
+        ThemeMode.LIGHT to "라이트",
+        ThemeMode.DARK to "다크",
+        ThemeMode.AUTO to "자동"
+    )
+
+    SingleChoiceSegmentedButtonRow(modifier = Modifier.fillMaxWidth()) {
+        options.forEachIndexed { index, (mode, label) ->
+            SegmentedButton(
+                shape = SegmentedButtonDefaults.itemShape(
+                    index = index,
+                    count = options.size
+                ),
+                selected = selectedMode == mode,
+                onClick = { onModeSelected(mode) }
+            ) {
+                Text(label)
+            }
+        }
+    }
 }
 
 private fun formatDate(dateTimeStr: String): String {

@@ -1,1 +1,0 @@
--keep,allowobfuscation,allowshrinking class com.scrapeverything.app.ui.category.CategoryListViewModel

@@ -32,6 +32,7 @@ import com.scrapeverything.app.ui.component.ListBottomLoading
 @Composable
 fun ScrapListScreen(
     onNavigateToScrapDetail: (scrapId: Long) -> Unit,
+    onNavigateToScrapAdd: (categoryId: Long) -> Unit,
     onNavigateBack: () -> Unit,
     viewModel: ScrapListViewModel = hiltViewModel()
 ) {
@@ -87,7 +88,17 @@ fun ScrapListScreen(
                 )
             )
         },
-        snackbarHost = { SnackbarHost(snackbarHostState) }
+        snackbarHost = { SnackbarHost(snackbarHostState) },
+        floatingActionButton = {
+            FloatingActionButton(
+                onClick = { onNavigateToScrapAdd(uiState.categoryId) }
+            ) {
+                Icon(
+                    imageVector = Icons.Filled.Add,
+                    contentDescription = "스크랩 추가"
+                )
+            }
+        }
     ) { paddingValues ->
 
         PullToRefreshBox(
@@ -187,20 +198,34 @@ private fun ScrapListItem(
                 modifier = Modifier.size(24.dp)
             )
             Spacer(modifier = Modifier.width(12.dp))
-            Text(
-                text = scrap.scrapTitle,
-                style = MaterialTheme.typography.titleMedium,
-                color = MaterialTheme.colorScheme.onSurface,
-                maxLines = 2,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f)
-            )
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = scrap.scrapTitle,
+                    style = MaterialTheme.typography.titleMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                    maxLines = 2,
+                    overflow = TextOverflow.Ellipsis
+                )
+                if (!scrap.description.isNullOrBlank()) {
+                    Text(
+                        text = scrap.description,
+                        style = MaterialTheme.typography.labelSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis
+                    )
+                }
+            }
             Box {
-                IconButton(onClick = { showMenu = true }) {
+                IconButton(
+                    onClick = { showMenu = true },
+                    modifier = Modifier.size(36.dp)
+                ) {
                     Icon(
                         Icons.Filled.MoreVert,
                         contentDescription = "더보기",
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(20.dp)
                     )
                 }
                 DropdownMenu(

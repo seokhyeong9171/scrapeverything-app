@@ -1,7 +1,7 @@
 [versions]
-agp = "8.7.3"
-kotlin = "2.1.0"
-ksp = "2.1.0-1.0.29"
+agp = "9.1.0"
+kotlin = "2.2.10"
+ksp = "2.2.10-2.0.2"
 
 # AndroidX
 coreKtx = "1.15.0"
@@ -12,13 +12,22 @@ navigationCompose = "2.8.5"
 securityCrypto = "1.1.0-alpha06"
 
 # Hilt
-hilt = "2.53.1"
+hilt = "2.59.2"
 hiltNavigationCompose = "1.2.0"
 
 # Network
 retrofit = "2.11.0"
 okhttp = "4.12.0"
 gson = "2.11.0"
+
+# Google Mobile Ads
+playServicesAds = "24.1.0"
+
+# Image Loading
+coil = "2.7.0"
+
+# In-App Update
+playAppUpdate = "2.1.0"
 
 # Coroutines
 coroutines = "1.9.0"
@@ -56,6 +65,16 @@ retrofit-core = { group = "com.squareup.retrofit2", name = "retrofit", version.r
 retrofit-converter-gson = { group = "com.squareup.retrofit2", name = "converter-gson", version.ref = "retrofit" }
 okhttp-logging = { group = "com.squareup.okhttp3", name = "logging-interceptor", version.ref = "okhttp" }
 gson = { group = "com.google.code.gson", name = "gson", version.ref = "gson" }
+
+# Google Mobile Ads
+play-services-ads = { group = "com.google.android.gms", name = "play-services-ads", version.ref = "playServicesAds" }
+
+# Image Loading
+coil-compose = { group = "io.coil-kt", name = "coil-compose", version.ref = "coil" }
+
+# In-App Update
+play-app-update = { group = "com.google.android.play", name = "app-update", version.ref = "playAppUpdate" }
+play-app-update-ktx = { group = "com.google.android.play", name = "app-update-ktx", version.ref = "playAppUpdate" }
 
 # Coroutines
 kotlinx-coroutines-android = { group = "org.jetbrains.kotlinx", name = "kotlinx-coroutines-android", version.ref = "coroutines" }
