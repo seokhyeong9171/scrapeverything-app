@@ -1,6 +1,7 @@
 package com.scrapeverything.app.ui.category
 
 import android.app.Activity
+import android.widget.Toast
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
@@ -19,7 +20,6 @@ import androidx.compose.material3.*
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
-import kotlinx.coroutines.launch
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.platform.LocalContext
@@ -45,23 +45,18 @@ fun CategoryListScreen(
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
-    val scope = rememberCoroutineScope()
 
     // 메인 화면에서 뒤로가기 두 번 눌러 종료
-    val activity = LocalContext.current as? Activity
-    var backPressedOnce by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = context as? Activity
+    var backPressedTime by remember { mutableLongStateOf(0L) }
     BackHandler {
-        if (backPressedOnce) {
+        val currentTime = System.currentTimeMillis()
+        if (currentTime - backPressedTime <= 2000L) {
             activity?.finish()
         } else {
-            backPressedOnce = true
-            scope.launch {
-                snackbarHostState.showSnackbar(
-                    message = "뒤로가기 버튼을 한 번 더 누르면 종료됩니다",
-                    duration = SnackbarDuration.Short
-                )
-                backPressedOnce = false
-            }
+            backPressedTime = currentTime
+            Toast.makeText(context, "뒤로가기 버튼을 한 번 더 누르면 종료됩니다", Toast.LENGTH_SHORT).show()
         }
     }
 
