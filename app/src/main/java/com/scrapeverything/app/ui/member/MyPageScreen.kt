@@ -27,6 +27,8 @@ import androidx.compose.ui.unit.dp
 import android.content.Intent
 import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scrapeverything.app.BuildConfig
 import com.scrapeverything.app.data.local.ThemeMode
@@ -45,6 +47,10 @@ fun MyPageScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val snackbarHostState = remember { SnackbarHostState() }
+
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        viewModel.refreshLoginStatus()
+    }
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->

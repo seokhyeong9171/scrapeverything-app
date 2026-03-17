@@ -55,10 +55,10 @@ class MyPageViewModel @Inject constructor(
     val event: SharedFlow<MyPageEvent> = _event.asSharedFlow()
 
     init {
-        checkLoginStatus()
+        refreshLoginStatus()
     }
 
-    private fun checkLoginStatus() {
+    fun refreshLoginStatus() {
         val loggedIn = tokenStorage.hasTokens()
         _uiState.update { it.copy(isLoggedIn = loggedIn) }
         if (loggedIn) {
