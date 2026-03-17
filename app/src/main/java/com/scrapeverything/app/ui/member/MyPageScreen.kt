@@ -99,6 +99,7 @@ fun MyPageScreen(
                 else -> {
                     LoggedInContent(
                         uiState = uiState,
+                        paddingValues = paddingValues,
                         onNavigateToBackupRestore = onNavigateToBackupRestore,
                         onNavigateToNotice = onNavigateToNotice,
                         viewModel = viewModel
@@ -152,6 +153,7 @@ fun MyPageScreen(
 @Composable
 private fun LoggedInContent(
     uiState: MyPageUiState,
+    paddingValues: PaddingValues,
     onNavigateToBackupRestore: () -> Unit,
     onNavigateToNotice: () -> Unit,
     viewModel: MyPageViewModel
@@ -159,6 +161,7 @@ private fun LoggedInContent(
     Column(
         modifier = Modifier
             .fillMaxSize()
+            .padding(paddingValues)
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {

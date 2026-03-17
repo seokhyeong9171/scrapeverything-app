@@ -86,6 +86,11 @@ fun NavGraph(
                     navController.navigate(Route.Login.route) {
                         popUpTo(Route.Register.route) { inclusive = true }
                     }
+                },
+                onLoginAfterRegisterSuccess = {
+                    navController.navigate(Route.CategoryList.route) {
+                        popUpTo(0) { inclusive = true }
+                    }
                 }
             )
         }

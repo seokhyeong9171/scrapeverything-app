@@ -40,6 +40,8 @@ data class RegisterUiState(
 sealed class RegisterEvent {
     data class ShowSnackbar(val message: String) : RegisterEvent()
     object RegisterSuccess : RegisterEvent()
+    object LoginAfterRegisterSuccess : RegisterEvent()
+    data class LoginAfterRegisterFailed(val message: String) : RegisterEvent()
 }
 
 @HiltViewModel
@@ -216,8 +218,17 @@ class RegisterViewModel @Inject constructor(
                 nickname = state.nickname.trim()
             )) {
                 is ApiResult.Success -> {
-                    _uiState.update { it.copy(isLoading = false) }
-                    _event.emit(RegisterEvent.RegisterSuccess)
+                    // 회원가입 성공 후 자동 로그인
+                    when (authRepository.login(state.email, state.password, keepLoggedIn = true)) {
+                        is ApiResult.Success -> {
+                            _uiState.update { it.copy(isLoading = false) }
+                            _event.emit(RegisterEvent.LoginAfterRegisterSuccess)
+                        }
+                        else -> {
+                            _uiState.update { it.copy(isLoading = false) }
+                            _event.emit(RegisterEvent.LoginAfterRegisterFailed("회원가입은 완료되었으나 자동 로그인에 실패했습니다"))
+                        }
+                    }
                 }
                 is ApiResult.Error -> {
                     _uiState.update {
