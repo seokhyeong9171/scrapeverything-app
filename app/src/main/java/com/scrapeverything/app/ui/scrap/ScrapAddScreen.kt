@@ -12,7 +12,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.scrapeverything.app.data.model.response.CategoryItem
+import com.scrapeverything.app.data.local.db.entity.CategoryEntity
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,9 +142,9 @@ fun ScrapAddScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategoryDropdown(
-    categories: List<CategoryItem>,
-    selectedCategory: CategoryItem?,
-    onCategorySelected: (CategoryItem) -> Unit,
+    categories: List<CategoryEntity>,
+    selectedCategory: CategoryEntity?,
+    onCategorySelected: (CategoryEntity) -> Unit,
     isLoading: Boolean
 ) {
     var expanded by remember { mutableStateOf(false) }
@@ -154,7 +154,7 @@ private fun CategoryDropdown(
         onExpandedChange = { if (!isLoading) expanded = it }
     ) {
         OutlinedTextField(
-            value = if (isLoading) "불러오는 중..." else selectedCategory?.categoryName ?: "",
+            value = if (isLoading) "불러오는 중..." else selectedCategory?.name ?: "",
             onValueChange = {},
             readOnly = true,
             enabled = !isLoading,
@@ -171,7 +171,7 @@ private fun CategoryDropdown(
         ) {
             categories.forEach { category ->
                 DropdownMenuItem(
-                    text = { Text(category.categoryName) },
+                    text = { Text(category.name) },
                     onClick = {
                         onCategorySelected(category)
                         expanded = false

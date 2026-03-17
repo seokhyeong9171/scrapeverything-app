@@ -3,10 +3,9 @@ package com.scrapeverything.app.ui.scrap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.scrapeverything.app.data.model.response.ScrapDetailResponse
+import com.scrapeverything.app.data.local.db.entity.ScrapEntity
+import com.scrapeverything.app.data.repository.CategoryRepository
 import com.scrapeverything.app.data.repository.ScrapRepository
-import com.scrapeverything.app.network.ApiResult
-import com.scrapeverything.app.util.ErrorMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +18,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ScrapDetailUiState(
-    val scrapDetail: ScrapDetailResponse? = null,
+    val scrapDetail: ScrapEntity? = null,
+    val categoryName: String = "",
     val isLoading: Boolean = false,
     val error: String? = null
 )
@@ -32,7 +32,8 @@ sealed class ScrapDetailEvent {
 @HiltViewModel
 class ScrapDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
-    private val scrapRepository: ScrapRepository
+    private val scrapRepository: ScrapRepository,
+    private val categoryRepository: CategoryRepository
 ) : ViewModel() {
 
     private val scrapId: Long = savedStateHandle["scrapId"] ?: 0L
@@ -53,21 +54,19 @@ class ScrapDetailViewModel @Inject constructor(
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true, error = null) }
 
-            when (val result = scrapRepository.getScrapDetail(scrapId)) {
-                is ApiResult.Success -> {
-                    _uiState.update {
-                        it.copy(scrapDetail = result.data, isLoading = false)
-                    }
+            val scrap = scrapRepository.getScrapDetail(scrapId)
+            if (scrap != null) {
+                val category = categoryRepository.getCategoryById(scrap.categoryId)
+                _uiState.update {
+                    it.copy(
+                        scrapDetail = scrap,
+                        categoryName = category?.name ?: "",
+                        isLoading = false
+                    )
                 }
-                is ApiResult.Error -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, error = ErrorMessages.getMessage(result.code))
-                    }
-                }
-                is ApiResult.NetworkError -> {
-                    _uiState.update {
-                        it.copy(isLoading = false, error = "네트워크 연결을 확인해주세요")
-                    }
+            } else {
+                _uiState.update {
+                    it.copy(isLoading = false, error = "스크랩을 찾을 수 없습니다")
                 }
             }
         }
@@ -75,17 +74,8 @@ class ScrapDetailViewModel @Inject constructor(
 
     fun deleteScrap() {
         viewModelScope.launch {
-            when (val result = scrapRepository.deleteScrap(scrapId)) {
-                is ApiResult.Success -> {
-                    _event.emit(ScrapDetailEvent.NavigateBack)
-                }
-                is ApiResult.Error -> {
-                    _event.emit(ScrapDetailEvent.ShowSnackbar(ErrorMessages.getMessage(result.code)))
-                }
-                is ApiResult.NetworkError -> {
-                    _event.emit(ScrapDetailEvent.ShowSnackbar("네트워크 연결을 확인해주세요"))
-                }
-            }
+            scrapRepository.deleteScrap(scrapId)
+            _event.emit(ScrapDetailEvent.NavigateBack)
         }
     }
 }

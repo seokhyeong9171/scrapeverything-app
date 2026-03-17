@@ -3,12 +3,13 @@ package com.scrapeverything.app.ui.member
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.ArrowForwardIos
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
+import androidx.compose.material.icons.outlined.Backup
 import androidx.compose.material.icons.outlined.Campaign
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.Email
@@ -37,6 +38,7 @@ import com.scrapeverything.app.ui.component.FullScreenLoading
 fun MyPageScreen(
     onNavigateBack: () -> Unit,
     onNavigateToLogin: () -> Unit,
+    onNavigateToBackupRestore: () -> Unit = {},
     onNavigateToNotice: () -> Unit = {},
     viewModel: MyPageViewModel = hiltViewModel()
 ) {
@@ -49,8 +51,8 @@ fun MyPageScreen(
                 is MyPageEvent.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
-                is MyPageEvent.NavigateToLogin -> {
-                    onNavigateToLogin()
+                is MyPageEvent.LogoutSuccess -> {
+                    snackbarHostState.showSnackbar("로그아웃되었습니다")
                 }
             }
         }
@@ -81,207 +83,37 @@ fun MyPageScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
 
-        when {
-            uiState.isLoading -> {
-                FullScreenLoading(modifier = Modifier.padding(paddingValues))
-            }
-            uiState.error != null -> {
-                ErrorView(
-                    message = uiState.error!!,
-                    onRetry = { viewModel.loadMemberInfo() },
-                    modifier = Modifier.padding(paddingValues)
-                )
-            }
-            else -> {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .verticalScroll(rememberScrollState())
-                        .padding(16.dp)
-                ) {
-                    // 프로필 섹션
-                    Card(
-                        modifier = Modifier.fillMaxWidth(),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(20.dp)
-                        ) {
-                            // 닉네임
-                            Row(
-                                verticalAlignment = Alignment.CenterVertically
-                            ) {
-                                Icon(
-                                    Icons.Outlined.Person,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.primary,
-                                    modifier = Modifier.size(20.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = uiState.nickname,
-                                    style = MaterialTheme.typography.titleLarge,
-                                    fontWeight = FontWeight.Bold,
-                                    modifier = Modifier.weight(1f)
-                                )
-                                IconButton(onClick = { viewModel.showEditNicknameDialog() }) {
-                                    Icon(
-                                        Icons.Outlined.Edit,
-                                        contentDescription = "닉네임 수정",
-                                        tint = MaterialTheme.colorScheme.primary,
-                                        modifier = Modifier.size(20.dp)
-                                    )
-                                }
-                            }
-
-                            Spacer(modifier = Modifier.height(12.dp))
-
-                            // 이메일
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Outlined.Email,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = uiState.email,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-
-                            Spacer(modifier = Modifier.height(8.dp))
-
-                            // 가입일
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                Icon(
-                                    Icons.Outlined.Schedule,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    modifier = Modifier.size(18.dp)
-                                )
-                                Spacer(modifier = Modifier.width(8.dp))
-                                Text(
-                                    text = "가입일: ${formatDate(uiState.createdAt)}",
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onSurfaceVariant
-                                )
-                            }
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // 공지사항 버튼
-                    Card(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable(onClick = onNavigateToNotice),
-                        colors = CardDefaults.cardColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceVariant
-                        )
-                    ) {
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 14.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Icon(
-                                Icons.Outlined.Campaign,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.size(20.dp)
-                            )
-                            Spacer(modifier = Modifier.width(12.dp))
-                            Text(
-                                text = "공지사항",
-                                style = MaterialTheme.typography.bodyLarge,
-                                modifier = Modifier.weight(1f)
-                            )
-                            Icon(
-                                Icons.AutoMirrored.Filled.ArrowForwardIos,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                                modifier = Modifier.size(16.dp)
-                            )
-                        }
-                    }
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // 화면 모드 설정
-                    Text(
-                        text = "화면 모드",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold
+        if (uiState.isLoggedIn) {
+            // 로그인 상태
+            when {
+                uiState.isLoading -> {
+                    FullScreenLoading(modifier = Modifier.padding(paddingValues))
+                }
+                uiState.error != null -> {
+                    ErrorView(
+                        message = uiState.error!!,
+                        onRetry = { viewModel.loadMemberInfo() },
+                        modifier = Modifier.padding(paddingValues)
                     )
-                    Spacer(modifier = Modifier.height(8.dp))
-                    ThemeModeSelector(
-                        selectedMode = uiState.selectedThemeMode,
-                        onModeSelected = { viewModel.setThemeMode(it) }
-                    )
-
-                    Spacer(modifier = Modifier.height(24.dp))
-
-                    // 로그아웃 버튼
-                    OutlinedButton(
-                        onClick = { viewModel.showLogoutDialog() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = null,
-                            modifier = Modifier.size(18.dp)
-                        )
-                        Spacer(modifier = Modifier.width(8.dp))
-                        Text("로그아웃")
-                    }
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    // 회원탈퇴 버튼
-                    TextButton(
-                        onClick = { viewModel.showWithdrawDialog() },
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Text(
-                            text = "회원탈퇴",
-                            color = MaterialTheme.colorScheme.error
-                        )
-                    }
-
-                    Spacer(modifier = Modifier.weight(1f))
-
-                    val context = LocalContext.current
-                    val contactEmail = "scrapeverything1234@gmail.com"
-                    Text(
-                        text = "문의 : $contactEmail",
-                        style = MaterialTheme.typography.bodyMedium.copy(
-                            textDecoration = TextDecoration.Underline
-                        ),
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable {
-                                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                                    data = Uri.parse("mailto:$contactEmail")
-                                    putExtra(Intent.EXTRA_SUBJECT, "[조각모음] 문의")
-                                }
-                                context.startActivity(intent)
-                            }
-                            .padding(vertical = 16.dp)
+                }
+                else -> {
+                    LoggedInContent(
+                        uiState = uiState,
+                        onNavigateToBackupRestore = onNavigateToBackupRestore,
+                        onNavigateToNotice = onNavigateToNotice,
+                        viewModel = viewModel
                     )
                 }
             }
+        } else {
+            // 비로그인 상태
+            LoggedOutContent(
+                uiState = uiState,
+                paddingValues = paddingValues,
+                onNavigateToLogin = onNavigateToLogin,
+                onNavigateToNotice = onNavigateToNotice,
+                viewModel = viewModel
+            )
         }
     }
 
@@ -309,12 +141,362 @@ fun MyPageScreen(
     if (uiState.showWithdrawDialog) {
         ConfirmDialog(
             title = "회원탈퇴",
-            message = "정말로 탈퇴하시겠습니까?\n탈퇴 후에는 모든 데이터가 삭제됩니다.",
+            message = "정말로 탈퇴하시겠습니까?\n탈퇴 후에는 서버의 백업 데이터가 삭제됩니다.",
             confirmText = "탈퇴",
             onConfirm = { viewModel.withdraw() },
             onDismiss = { viewModel.dismissWithdrawDialog() }
         )
     }
+}
+
+@Composable
+private fun LoggedInContent(
+    uiState: MyPageUiState,
+    onNavigateToBackupRestore: () -> Unit,
+    onNavigateToNotice: () -> Unit,
+    viewModel: MyPageViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // 프로필 섹션
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp)
+            ) {
+                // 닉네임
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Outlined.Person,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = uiState.nickname,
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.weight(1f)
+                    )
+                    IconButton(onClick = { viewModel.showEditNicknameDialog() }) {
+                        Icon(
+                            Icons.Outlined.Edit,
+                            contentDescription = "닉네임 수정",
+                            tint = MaterialTheme.colorScheme.primary,
+                            modifier = Modifier.size(20.dp)
+                        )
+                    }
+                }
+
+                Spacer(modifier = Modifier.height(12.dp))
+
+                // 이메일
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Email,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = uiState.email,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+
+                Spacer(modifier = Modifier.height(8.dp))
+
+                // 가입일
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Icon(
+                        Icons.Outlined.Schedule,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text(
+                        text = "가입일: ${formatDate(uiState.createdAt)}",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 백업/복원 버튼
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onNavigateToBackupRestore),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.Backup,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "백업 / 복원",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 공지사항 버튼
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onNavigateToNotice),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.Campaign,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "공지사항",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 화면 모드 설정
+        Text(
+            text = "화면 모드",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        ThemeModeSelector(
+            selectedMode = uiState.selectedThemeMode,
+            onModeSelected = { viewModel.setThemeMode(it) }
+        )
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 로그아웃 버튼
+        OutlinedButton(
+            onClick = { viewModel.showLogoutDialog() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Icon(
+                Icons.AutoMirrored.Filled.Logout,
+                contentDescription = null,
+                modifier = Modifier.size(18.dp)
+            )
+            Spacer(modifier = Modifier.width(8.dp))
+            Text("로그아웃")
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
+
+        // 회원탈퇴 버튼
+        TextButton(
+            onClick = { viewModel.showWithdrawDialog() },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text(
+                text = "회원탈퇴",
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        ContactFooter()
+    }
+}
+
+@Composable
+private fun LoggedOutContent(
+    uiState: MyPageUiState,
+    paddingValues: PaddingValues,
+    onNavigateToLogin: () -> Unit,
+    onNavigateToNotice: () -> Unit,
+    viewModel: MyPageViewModel
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(paddingValues)
+            .verticalScroll(rememberScrollState())
+            .padding(16.dp)
+    ) {
+        // 로그인 유도 카드
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(20.dp),
+                horizontalAlignment = Alignment.CenterHorizontally
+            ) {
+                Icon(
+                    Icons.Outlined.Person,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(48.dp)
+                )
+                Spacer(modifier = Modifier.height(12.dp))
+                Text(
+                    text = "로그인하면 데이터를 백업할 수 있어요",
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                Spacer(modifier = Modifier.height(16.dp))
+                Button(onClick = onNavigateToLogin) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Login,
+                        contentDescription = null,
+                        modifier = Modifier.size(18.dp)
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("로그인")
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 공지사항 버튼
+        Card(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable(onClick = onNavigateToNotice),
+            colors = CardDefaults.cardColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant
+            )
+        ) {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp, vertical = 14.dp),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Icon(
+                    Icons.Outlined.Campaign,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.size(20.dp)
+                )
+                Spacer(modifier = Modifier.width(12.dp))
+                Text(
+                    text = "공지사항",
+                    style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.weight(1f)
+                )
+                Icon(
+                    Icons.AutoMirrored.Filled.ArrowForwardIos,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.size(16.dp)
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(24.dp))
+
+        // 화면 모드 설정
+        Text(
+            text = "화면 모드",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold
+        )
+        Spacer(modifier = Modifier.height(8.dp))
+        ThemeModeSelector(
+            selectedMode = uiState.selectedThemeMode,
+            onModeSelected = { viewModel.setThemeMode(it) }
+        )
+
+        Spacer(modifier = Modifier.weight(1f))
+
+        ContactFooter()
+    }
+}
+
+@Composable
+private fun ContactFooter() {
+    val context = LocalContext.current
+    val contactEmail = "scrapeverything1234@gmail.com"
+    Text(
+        text = "문의 : $contactEmail",
+        style = MaterialTheme.typography.bodyMedium.copy(
+            textDecoration = TextDecoration.Underline
+        ),
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        textAlign = TextAlign.Center,
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable {
+                val intent = Intent(Intent.ACTION_SENDTO).apply {
+                    data = Uri.parse("mailto:$contactEmail")
+                    putExtra(Intent.EXTRA_SUBJECT, "[조각모음] 문의")
+                }
+                context.startActivity(intent)
+            }
+            .padding(vertical = 16.dp)
+    )
 }
 
 @Composable

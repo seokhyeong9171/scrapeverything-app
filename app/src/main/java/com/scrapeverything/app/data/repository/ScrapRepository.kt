@@ -1,66 +1,81 @@
 package com.scrapeverything.app.data.repository
 
-import com.scrapeverything.app.data.api.ScrapApi
-import com.scrapeverything.app.data.model.request.ScrapAddRequest
-import com.scrapeverything.app.data.model.request.ScrapUpdateRequest
-import com.scrapeverything.app.data.model.response.ScrapAddResponse
-import com.scrapeverything.app.data.model.response.ScrapDetailResponse
-import com.scrapeverything.app.data.model.response.ScrapListResponse
-import com.scrapeverything.app.data.model.response.ScrapUpdateResponse
-import com.scrapeverything.app.network.ApiResult
-import com.scrapeverything.app.network.safeApiCall
+import com.scrapeverything.app.data.local.OpenGraphFetcher
+import com.scrapeverything.app.data.local.db.dao.ScrapDao
+import com.scrapeverything.app.data.local.db.entity.ScrapEntity
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.launch
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class ScrapRepository @Inject constructor(
-    private val scrapApi: ScrapApi
+    private val scrapDao: ScrapDao,
+    private val openGraphFetcher: OpenGraphFetcher
 ) {
 
-    private val detailCache = mutableMapOf<Long, ScrapDetailResponse>()
+    private val backgroundScope = CoroutineScope(Dispatchers.IO)
 
-    suspend fun getScrapsByCategory(
-        categoryId: Long, lastId: Long? = null, size: Int = 10
-    ): ApiResult<ScrapListResponse> {
-        return safeApiCall { scrapApi.getScrapsByCategory(categoryId, lastId, size) }
+    fun getScrapsByCategory(categoryId: Long): Flow<List<ScrapEntity>> {
+        return scrapDao.getScrapsByCategory(categoryId)
     }
 
-    suspend fun getScrapDetail(scrapId: Long): ApiResult<ScrapDetailResponse> {
-        detailCache[scrapId]?.let { return ApiResult.Success(it) }
-
-        val result = safeApiCall { scrapApi.getScrapDetail(scrapId) }
-        if (result is ApiResult.Success) {
-            detailCache[scrapId] = result.data
-        }
-        return result
+    suspend fun getScrapDetail(scrapId: Long): ScrapEntity? {
+        return scrapDao.getScrapById(scrapId)
     }
 
     suspend fun addScrap(
         categoryId: Long, title: String, url: String, description: String? = null
-    ): ApiResult<ScrapAddResponse> {
-        return safeApiCall {
-            scrapApi.addScrap(categoryId, ScrapAddRequest(title, url, description))
-        }
+    ): Long {
+        val scrapId = scrapDao.insert(
+            ScrapEntity(
+                categoryId = categoryId,
+                title = title,
+                url = url,
+                description = description
+            )
+        )
+        fetchOgMetadataInBackground(scrapId, url)
+        return scrapId
     }
 
     suspend fun updateScrap(
         scrapId: Long, categoryId: Long? = null,
         title: String, url: String, description: String? = null
-    ): ApiResult<ScrapUpdateResponse> {
-        val result = safeApiCall {
-            scrapApi.updateScrap(scrapId, ScrapUpdateRequest(categoryId, title, url, description))
+    ) {
+        val existing = scrapDao.getScrapById(scrapId) ?: return
+        val urlChanged = existing.url != url
+        scrapDao.update(
+            existing.copy(
+                categoryId = categoryId ?: existing.categoryId,
+                title = title,
+                url = url,
+                description = description,
+                updatedAt = System.currentTimeMillis()
+            )
+        )
+        if (urlChanged) {
+            fetchOgMetadataInBackground(scrapId, url)
         }
-        if (result is ApiResult.Success) {
-            detailCache.remove(scrapId)
-        }
-        return result
     }
 
-    suspend fun deleteScrap(scrapId: Long): ApiResult<Unit> {
-        val result = safeApiCall { scrapApi.deleteScrap(scrapId) }
-        if (result is ApiResult.Success) {
-            detailCache.remove(scrapId)
+    suspend fun deleteScrap(scrapId: Long) {
+        scrapDao.deleteById(scrapId)
+    }
+
+    private fun fetchOgMetadataInBackground(scrapId: Long, url: String) {
+        backgroundScope.launch {
+            val og = openGraphFetcher.fetch(url)
+            val scrap = scrapDao.getScrapById(scrapId) ?: return@launch
+            scrapDao.update(
+                scrap.copy(
+                    ogTitle = og.ogTitle,
+                    ogDescription = og.ogDescription,
+                    ogImageUrl = og.ogImageUrl
+                )
+            )
         }
-        return result
     }
 }
