@@ -40,8 +40,14 @@ class ScrapAddFromShareViewModel @Inject constructor(
     private val scrapRepository: ScrapRepository
 ) : ViewModel() {
 
+    private val sharedData = sharedUrlHolder.consumeAll()
+
     private val _uiState = MutableStateFlow(
-        ScrapAddFromShareUiState(url = sharedUrlHolder.consume() ?: "")
+        ScrapAddFromShareUiState(
+            url = sharedData?.url ?: "",
+            scrapTitle = sharedData?.title ?: "",
+            description = sharedData?.description ?: ""
+        )
     )
     val uiState: StateFlow<ScrapAddFromShareUiState> = _uiState.asStateFlow()
 
