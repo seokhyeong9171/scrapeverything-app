@@ -21,7 +21,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
-import com.scrapeverything.app.data.model.response.ScrapItem
+import com.scrapeverything.app.data.local.db.entity.ScrapEntity
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.EmptyView
 import com.scrapeverything.app.ui.component.ErrorView
@@ -40,7 +40,7 @@ fun ScrapListScreen(
     val snackbarHostState = remember { SnackbarHostState() }
     val listState = rememberLazyListState()
 
-    var deleteTarget by remember { mutableStateOf<ScrapItem?>(null) }
+    var deleteTarget by remember { mutableStateOf<ScrapEntity?>(null) }
 
     LaunchedEffect(Unit) {
         viewModel.event.collect { event ->
@@ -49,20 +49,6 @@ fun ScrapListScreen(
                     snackbarHostState.showSnackbar(event.message)
                 }
             }
-        }
-    }
-
-    // 무한스크롤
-    val shouldLoadMore = remember {
-        derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = listState.layoutInfo.totalItemsCount
-            lastVisibleItem >= totalItems - 3 && uiState.hasNext && !uiState.isLoadingMore
-        }
-    }
-    LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value) {
-            viewModel.loadMore()
         }
     }
 
@@ -101,51 +87,34 @@ fun ScrapListScreen(
         }
     ) { paddingValues ->
 
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = { viewModel.refresh() },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                uiState.isLoading -> {
-                    FullScreenLoading()
-                }
-                uiState.error != null && uiState.scraps.isEmpty() -> {
-                    ErrorView(
-                        message = uiState.error!!,
-                        onRetry = { viewModel.loadScraps() }
-                    )
-                }
-                uiState.scraps.isEmpty() -> {
-                    EmptyView(
-                        icon = Icons.Outlined.BookmarkBorder,
-                        message = "스크랩을 추가해보세요"
-                    )
-                }
-                else -> {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = 8.dp)
-                    ) {
-                        items(
-                            items = uiState.scraps,
-                            key = { it.scrapId }
-                        ) { scrap ->
-                            ScrapListItem(
-                                scrap = scrap,
-                                onClick = { onNavigateToScrapDetail(scrap.scrapId) },
-                                onDelete = { deleteTarget = scrap }
-                            )
-                        }
-
-                        if (uiState.isLoadingMore) {
-                            item {
-                                ListBottomLoading()
-                            }
-                        }
+        when {
+            uiState.isLoading -> {
+                FullScreenLoading(modifier = Modifier.padding(paddingValues))
+            }
+            uiState.scraps.isEmpty() -> {
+                EmptyView(
+                    icon = Icons.Outlined.BookmarkBorder,
+                    message = "스크랩을 추가해보세요",
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            else -> {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(
+                        items = uiState.scraps,
+                        key = { it.id }
+                    ) { scrap ->
+                        ScrapListItem(
+                            scrap = scrap,
+                            onClick = { onNavigateToScrapDetail(scrap.id) },
+                            onDelete = { deleteTarget = scrap }
+                        )
                     }
                 }
             }
@@ -156,10 +125,10 @@ fun ScrapListScreen(
     deleteTarget?.let { scrap ->
         ConfirmDialog(
             title = "스크랩 삭제",
-            message = "'${scrap.scrapTitle}'을(를) 삭제하시겠습니까?",
+            message = "'${scrap.title}'을(를) 삭제하시겠습니까?",
             confirmText = "삭제",
             onConfirm = {
-                viewModel.deleteScrap(scrap.scrapId)
+                viewModel.deleteScrap(scrap.id)
                 deleteTarget = null
             },
             onDismiss = { deleteTarget = null }
@@ -169,7 +138,7 @@ fun ScrapListScreen(
 
 @Composable
 private fun ScrapListItem(
-    scrap: ScrapItem,
+    scrap: ScrapEntity,
     onClick: () -> Unit,
     onDelete: () -> Unit
 ) {
@@ -200,7 +169,7 @@ private fun ScrapListItem(
             Spacer(modifier = Modifier.width(12.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = scrap.scrapTitle,
+                    text = scrap.title,
                     style = MaterialTheme.typography.titleMedium,
                     color = MaterialTheme.colorScheme.onSurface,
                     maxLines = 2,

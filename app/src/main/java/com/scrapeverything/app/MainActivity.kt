@@ -31,8 +31,6 @@ import com.google.android.play.core.install.model.UpdateAvailability
 import com.scrapeverything.app.data.local.SharedUrlHolder
 import com.scrapeverything.app.data.local.ThemeMode
 import com.scrapeverything.app.data.local.ThemePreferences
-import com.scrapeverything.app.data.local.TokenStorage
-import com.scrapeverything.app.network.SessionManager
 import com.scrapeverything.app.ui.component.AdBanner
 import com.scrapeverything.app.ui.navigation.NavGraph
 import com.scrapeverything.app.ui.theme.ScrapEverythingTheme
@@ -41,12 +39,6 @@ import javax.inject.Inject
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
-
-    @Inject
-    lateinit var tokenStorage: TokenStorage
-
-    @Inject
-    lateinit var sessionManager: SessionManager
 
     @Inject
     lateinit var themePreferences: ThemePreferences
@@ -165,8 +157,6 @@ class MainActivity : ComponentActivity() {
                         val currentSharedUrl = sharedUrl
                         NavGraph(
                             navController = navController,
-                            tokenStorage = tokenStorage,
-                            sessionManager = sessionManager,
                             sharedUrl = currentSharedUrl,
                             onSharedUrlConsumed = { sharedUrl = null },
                             modifier = Modifier.weight(1f)

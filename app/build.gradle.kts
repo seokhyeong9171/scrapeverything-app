@@ -121,6 +121,14 @@ dependencies {
     implementation(libs.play.app.update)
     implementation(libs.play.app.update.ktx)
 
+    // Room
+    implementation(libs.room.runtime)
+    implementation(libs.room.ktx)
+    ksp(libs.room.compiler)
+
+    // Jsoup
+    implementation(libs.jsoup)
+
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
 }

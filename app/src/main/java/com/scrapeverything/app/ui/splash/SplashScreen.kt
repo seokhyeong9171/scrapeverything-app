@@ -11,25 +11,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.scrapeverything.app.data.local.TokenStorage
 import kotlinx.coroutines.delay
 
 @Composable
 fun SplashScreen(
-    tokenStorage: TokenStorage,
-    onNavigateToLogin: () -> Unit,
     onNavigateToMain: () -> Unit
 ) {
-    // 자동 로그인 판단
     LaunchedEffect(Unit) {
-        delay(800) // 스플래시 최소 표시 시간
-
-        if (tokenStorage.isKeepLoggedIn() && tokenStorage.hasTokens()) {
-            onNavigateToMain()
-        } else {
-            tokenStorage.clearTokens()
-            onNavigateToLogin()
-        }
+        delay(800)
+        onNavigateToMain()
     }
 
     Box(

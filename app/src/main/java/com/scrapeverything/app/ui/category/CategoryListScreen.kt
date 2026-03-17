@@ -17,7 +17,6 @@ import androidx.compose.material.icons.outlined.Folder
 import androidx.compose.material.icons.outlined.FolderOpen
 import androidx.compose.material.icons.outlined.Person
 import androidx.compose.material3.*
-import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -31,9 +30,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.EmptyView
-import com.scrapeverything.app.ui.component.ErrorView
 import com.scrapeverything.app.ui.component.FullScreenLoading
-import com.scrapeverything.app.ui.component.ListBottomLoading
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -67,22 +64,7 @@ fun CategoryListScreen(
                 is CategoryListEvent.ShowSnackbar -> {
                     snackbarHostState.showSnackbar(event.message)
                 }
-                is CategoryListEvent.NavigateToLogin -> { /* 향후 구현 */ }
             }
-        }
-    }
-
-    // 무한스크롤: 마지막 아이템 근처 도달 시 추가 로드
-    val shouldLoadMore = remember {
-        derivedStateOf {
-            val lastVisibleItem = listState.layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            val totalItems = listState.layoutInfo.totalItemsCount
-            lastVisibleItem >= totalItems - 3 && uiState.hasNext && !uiState.isLoadingMore
-        }
-    }
-    LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value) {
-            viewModel.loadMore()
         }
     }
 
@@ -133,62 +115,47 @@ fun CategoryListScreen(
         snackbarHost = { SnackbarHost(snackbarHostState) }
     ) { paddingValues ->
 
-        PullToRefreshBox(
-            isRefreshing = uiState.isRefreshing,
-            onRefresh = { viewModel.refresh() },
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-        ) {
-            when {
-                // 최초 로딩
-                uiState.isLoading -> {
-                    FullScreenLoading()
-                }
-                // 에러
-                uiState.error != null && uiState.categories.isEmpty() -> {
-                    ErrorView(
-                        message = uiState.error!!,
-                        onRetry = { viewModel.loadCategories() }
-                    )
-                }
-                // 빈 상태
-                uiState.categories.isEmpty() -> {
-                    EmptyView(
-                        icon = Icons.Outlined.FolderOpen,
-                        message = "카테고리를 추가해보세요"
-                    )
-                }
-                // 카테고리 리스트
-                else -> {
-                    LazyColumn(
-                        state = listState,
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(vertical = 8.dp)
-                    ) {
-                        items(
-                            items = uiState.categories,
-                            key = { it.categoryId }
-                        ) { category ->
-                            CategoryItem(
-                                category = category,
-                                onClick = {
-                                    onNavigateToScrapList(
-                                        category.categoryId,
-                                        category.categoryName
-                                    )
-                                },
-                                onEdit = { viewModel.showEditDialog(category) },
-                                onDelete = { viewModel.showDeleteDialog(category) }
-                            )
-                        }
-
-                        // 추가 로딩 인디케이터
-                        if (uiState.isLoadingMore) {
-                            item {
-                                ListBottomLoading()
-                            }
-                        }
+        when {
+            uiState.isLoading -> {
+                FullScreenLoading(modifier = Modifier.padding(paddingValues))
+            }
+            uiState.error != null && uiState.categories.isEmpty() -> {
+                EmptyView(
+                    icon = Icons.Outlined.FolderOpen,
+                    message = "카테고리를 추가해보세요",
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            uiState.categories.isEmpty() -> {
+                EmptyView(
+                    icon = Icons.Outlined.FolderOpen,
+                    message = "카테고리를 추가해보세요",
+                    modifier = Modifier.padding(paddingValues)
+                )
+            }
+            else -> {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(paddingValues),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(
+                        items = uiState.categories,
+                        key = { it.categoryId }
+                    ) { category ->
+                        CategoryItem(
+                            category = category,
+                            onClick = {
+                                onNavigateToScrapList(
+                                    category.categoryId,
+                                    category.categoryName
+                                )
+                            },
+                            onEdit = { viewModel.showEditDialog(category) },
+                            onDelete = { viewModel.showDeleteDialog(category) }
+                        )
                     }
                 }
             }
@@ -218,15 +185,35 @@ fun CategoryListScreen(
         )
     }
 
-    // 카테고리 삭제 확인 다이얼로그
+    // 카테고리 삭제 1차 확인 다이얼로그
     if (uiState.showDeleteDialog && uiState.deletingCategory != null) {
+        val category = uiState.deletingCategory!!
+        if (category.scrapCount > 0) {
+            ConfirmDialog(
+                title = "카테고리 삭제",
+                message = "'${category.categoryName}'에 스크랩이 ${category.scrapCount}개 있습니다. 삭제하시겠습니까?",
+                confirmText = "삭제",
+                onConfirm = { viewModel.showDeleteConfirmDialog() },
+                onDismiss = { viewModel.dismissDeleteDialog() }
+            )
+        } else {
+            ConfirmDialog(
+                title = "카테고리 삭제",
+                message = "'${category.categoryName}'을(를) 삭제하시겠습니까?",
+                confirmText = "삭제",
+                onConfirm = { viewModel.deleteCategory(category.categoryId) },
+                onDismiss = { viewModel.dismissDeleteDialog() }
+            )
+        }
+    }
+
+    // 카테고리 삭제 2차 확인 다이얼로그
+    if (uiState.showDeleteConfirmDialog && uiState.deletingCategory != null) {
         ConfirmDialog(
-            title = "카테고리 삭제",
-            message = "'${uiState.deletingCategory!!.categoryName}'을(를) 삭제하시겠습니까?",
+            title = "정말 삭제하시겠습니까?",
+            message = "이 작업은 되돌릴 수 없습니다. 하위 스크랩도 모두 삭제됩니다.",
             confirmText = "삭제",
-            onConfirm = {
-                viewModel.deleteCategory(uiState.deletingCategory!!.categoryId)
-            },
+            onConfirm = { viewModel.deleteCategory(uiState.deletingCategory!!.categoryId) },
             onDismiss = { viewModel.dismissDeleteDialog() }
         )
     }

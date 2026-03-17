@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.scrapeverything.app.data.local.ThemeMode
 import com.scrapeverything.app.data.local.ThemePreferences
+import com.scrapeverything.app.data.local.TokenStorage
 import com.scrapeverything.app.data.repository.AuthRepository
 import com.scrapeverything.app.data.repository.MemberRepository
 import com.scrapeverything.app.network.ApiResult
@@ -20,6 +21,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class MyPageUiState(
+    val isLoggedIn: Boolean = false,
     val email: String = "",
     val nickname: String = "",
     val createdAt: String = "",
@@ -33,11 +35,12 @@ data class MyPageUiState(
 
 sealed class MyPageEvent {
     data class ShowSnackbar(val message: String) : MyPageEvent()
-    object NavigateToLogin : MyPageEvent()
+    object LogoutSuccess : MyPageEvent()
 }
 
 @HiltViewModel
 class MyPageViewModel @Inject constructor(
+    private val tokenStorage: TokenStorage,
     private val memberRepository: MemberRepository,
     private val authRepository: AuthRepository,
     private val themePreferences: ThemePreferences
@@ -52,7 +55,15 @@ class MyPageViewModel @Inject constructor(
     val event: SharedFlow<MyPageEvent> = _event.asSharedFlow()
 
     init {
-        loadMemberInfo()
+        checkLoginStatus()
+    }
+
+    private fun checkLoginStatus() {
+        val loggedIn = tokenStorage.hasTokens()
+        _uiState.update { it.copy(isLoggedIn = loggedIn) }
+        if (loggedIn) {
+            loadMemberInfo()
+        }
     }
 
     fun loadMemberInfo() {
@@ -107,8 +118,16 @@ class MyPageViewModel @Inject constructor(
     fun logout() {
         viewModelScope.launch {
             authRepository.logout()
-            _uiState.update { it.copy(showLogoutDialog = false) }
-            _event.emit(MyPageEvent.NavigateToLogin)
+            _uiState.update {
+                it.copy(
+                    isLoggedIn = false,
+                    showLogoutDialog = false,
+                    email = "",
+                    nickname = "",
+                    createdAt = ""
+                )
+            }
+            _event.emit(MyPageEvent.LogoutSuccess)
         }
     }
 
@@ -116,8 +135,16 @@ class MyPageViewModel @Inject constructor(
         viewModelScope.launch {
             when (val result = authRepository.withdraw()) {
                 is ApiResult.Success -> {
-                    _uiState.update { it.copy(showWithdrawDialog = false) }
-                    _event.emit(MyPageEvent.NavigateToLogin)
+                    _uiState.update {
+                        it.copy(
+                            isLoggedIn = false,
+                            showWithdrawDialog = false,
+                            email = "",
+                            nickname = "",
+                            createdAt = ""
+                        )
+                    }
+                    _event.emit(MyPageEvent.LogoutSuccess)
                 }
                 is ApiResult.Error -> {
                     _uiState.update { it.copy(showWithdrawDialog = false) }

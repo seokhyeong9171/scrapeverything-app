@@ -3,11 +3,9 @@ package com.scrapeverything.app.ui.scrap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.scrapeverything.app.data.model.response.CategoryItem
+import com.scrapeverything.app.data.local.db.entity.CategoryEntity
 import com.scrapeverything.app.data.repository.CategoryRepository
 import com.scrapeverything.app.data.repository.ScrapRepository
-import com.scrapeverything.app.network.ApiResult
-import com.scrapeverything.app.util.ErrorMessages
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -20,8 +18,8 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 data class ScrapAddUiState(
-    val categories: List<CategoryItem> = emptyList(),
-    val selectedCategory: CategoryItem? = null,
+    val categories: List<CategoryEntity> = emptyList(),
+    val selectedCategory: CategoryEntity? = null,
     val scrapTitle: String = "",
     val url: String = "",
     val description: String = "",
@@ -56,31 +54,20 @@ class ScrapAddViewModel @Inject constructor(
     private fun loadCategories() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoadingCategories = true) }
-            when (val result = categoryRepository.getAllCategories()) {
-                is ApiResult.Success -> {
-                    val selected = result.data.find { it.categoryId == initialCategoryId }
-                        ?: result.data.firstOrNull()
-                    _uiState.update {
-                        it.copy(
-                            categories = result.data,
-                            selectedCategory = selected,
-                            isLoadingCategories = false
-                        )
-                    }
-                }
-                is ApiResult.Error -> {
-                    _uiState.update { it.copy(isLoadingCategories = false) }
-                    _event.emit(ScrapAddEvent.ShowSnackbar(ErrorMessages.getMessage(result.code)))
-                }
-                is ApiResult.NetworkError -> {
-                    _uiState.update { it.copy(isLoadingCategories = false) }
-                    _event.emit(ScrapAddEvent.ShowSnackbar("네트워크 연결을 확인해주세요"))
-                }
+            val categories = categoryRepository.getAllCategoriesList()
+            val selected = categories.find { it.id == initialCategoryId }
+                ?: categories.firstOrNull()
+            _uiState.update {
+                it.copy(
+                    categories = categories,
+                    selectedCategory = selected,
+                    isLoadingCategories = false
+                )
             }
         }
     }
 
-    fun onCategorySelected(category: CategoryItem) {
+    fun onCategorySelected(category: CategoryEntity) {
         _uiState.update { it.copy(selectedCategory = category) }
     }
 
@@ -119,26 +106,14 @@ class ScrapAddViewModel @Inject constructor(
 
         viewModelScope.launch {
             _uiState.update { it.copy(isSaving = true) }
-
-            when (val result = scrapRepository.addScrap(
-                categoryId = state.selectedCategory.categoryId,
+            scrapRepository.addScrap(
+                categoryId = state.selectedCategory.id,
                 title = state.scrapTitle,
                 url = state.url,
                 description = state.description.ifBlank { null }
-            )) {
-                is ApiResult.Success -> {
-                    _uiState.update { it.copy(isSaving = false) }
-                    _event.emit(ScrapAddEvent.SaveSuccess)
-                }
-                is ApiResult.Error -> {
-                    _uiState.update { it.copy(isSaving = false) }
-                    _event.emit(ScrapAddEvent.ShowSnackbar(ErrorMessages.getMessage(result.code)))
-                }
-                is ApiResult.NetworkError -> {
-                    _uiState.update { it.copy(isSaving = false) }
-                    _event.emit(ScrapAddEvent.ShowSnackbar("네트워크 연결을 확인해주세요"))
-                }
-            }
+            )
+            _uiState.update { it.copy(isSaving = false) }
+            _event.emit(ScrapAddEvent.SaveSuccess)
         }
     }
 }

@@ -157,9 +157,9 @@ fun ScrapAddFromShareScreen(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun CategoryDropdown(
-    categories: List<com.scrapeverything.app.data.model.response.CategoryItem>,
-    selectedCategory: com.scrapeverything.app.data.model.response.CategoryItem?,
-    onCategorySelected: (com.scrapeverything.app.data.model.response.CategoryItem) -> Unit
+    categories: List<com.scrapeverything.app.data.local.db.entity.CategoryEntity>,
+    selectedCategory: com.scrapeverything.app.data.local.db.entity.CategoryEntity?,
+    onCategorySelected: (com.scrapeverything.app.data.local.db.entity.CategoryEntity) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
 
@@ -168,7 +168,7 @@ private fun CategoryDropdown(
         onExpandedChange = { expanded = it }
     ) {
         OutlinedTextField(
-            value = selectedCategory?.categoryName ?: "",
+            value = selectedCategory?.name ?: "",
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
@@ -184,7 +184,7 @@ private fun CategoryDropdown(
         ) {
             categories.forEach { category ->
                 DropdownMenuItem(
-                    text = { Text(category.categoryName) },
+                    text = { Text(category.name) },
                     onClick = {
                         onCategorySelected(category)
                         expanded = false

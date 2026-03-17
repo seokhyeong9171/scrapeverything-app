@@ -64,7 +64,7 @@ fun ScrapDetailScreen(
             TopAppBar(
                 title = {
                     Text(
-                        text = uiState.scrapDetail?.scrapTitle ?: "스크랩 상세",
+                        text = uiState.scrapDetail?.title ?: "스크랩 상세",
                         fontWeight = FontWeight.Bold,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis
@@ -129,7 +129,7 @@ fun ScrapDetailScreen(
                 ) {
                     // 카테고리
                     Text(
-                        text = detail.categoryName,
+                        text = uiState.categoryName,
                         style = MaterialTheme.typography.labelLarge,
                         color = MaterialTheme.colorScheme.primary
                     )
@@ -138,7 +138,7 @@ fun ScrapDetailScreen(
 
                     // 제목
                     Text(
-                        text = detail.scrapTitle,
+                        text = detail.title,
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                         color = MaterialTheme.colorScheme.onSurface
@@ -222,13 +222,13 @@ fun ScrapDetailScreen(
                     HorizontalDivider()
                     Spacer(modifier = Modifier.height(12.dp))
                     Text(
-                        text = "생성일: ${formatDateTime(detail.createdAt)}",
+                        text = "생성일: ${formatTimestamp(detail.createdAt)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
                     Spacer(modifier = Modifier.height(4.dp))
                     Text(
-                        text = "수정일: ${formatDateTime(detail.updatedAt)}",
+                        text = "수정일: ${formatTimestamp(detail.updatedAt)}",
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
@@ -252,11 +252,11 @@ fun ScrapDetailScreen(
     }
 }
 
-private fun formatDateTime(dateTimeStr: String): String {
+private fun formatTimestamp(millis: Long): String {
     return try {
-        // "2024-01-15T10:30:00" -> "2024-01-15 10:30"
-        dateTimeStr.replace("T", " ").take(16)
+        val sdf = java.text.SimpleDateFormat("yyyy-MM-dd HH:mm", java.util.Locale.getDefault())
+        sdf.format(java.util.Date(millis))
     } catch (e: Exception) {
-        dateTimeStr
+        millis.toString()
     }
 }

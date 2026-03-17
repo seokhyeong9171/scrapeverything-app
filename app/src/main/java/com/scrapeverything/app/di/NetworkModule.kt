@@ -1,10 +1,9 @@
 package com.scrapeverything.app.di
 
 import com.scrapeverything.app.data.api.AuthApi
-import com.scrapeverything.app.data.api.CategoryApi
+import com.scrapeverything.app.data.api.BackupApi
 import com.scrapeverything.app.data.api.MemberApi
 import com.scrapeverything.app.data.api.NoticeApi
-import com.scrapeverything.app.data.api.ScrapApi
 import com.scrapeverything.app.network.AuthInterceptor
 import com.scrapeverything.app.network.RefreshInterceptor
 import com.scrapeverything.app.network.TokenAuthenticator
@@ -71,18 +70,6 @@ object NetworkModule {
 
     @Provides
     @Singleton
-    fun provideCategoryApi(retrofit: Retrofit): CategoryApi {
-        return retrofit.create(CategoryApi::class.java)
-    }
-
-    @Provides
-    @Singleton
-    fun provideScrapApi(retrofit: Retrofit): ScrapApi {
-        return retrofit.create(ScrapApi::class.java)
-    }
-
-    @Provides
-    @Singleton
     fun provideMemberApi(retrofit: Retrofit): MemberApi {
         return retrofit.create(MemberApi::class.java)
     }
@@ -91,5 +78,11 @@ object NetworkModule {
     @Singleton
     fun provideNoticeApi(retrofit: Retrofit): NoticeApi {
         return retrofit.create(NoticeApi::class.java)
+    }
+
+    @Provides
+    @Singleton
+    fun provideBackupApi(retrofit: Retrofit): BackupApi {
+        return retrofit.create(BackupApi::class.java)
     }
 }
