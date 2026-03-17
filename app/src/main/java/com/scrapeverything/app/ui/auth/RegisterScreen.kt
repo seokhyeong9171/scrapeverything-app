@@ -29,6 +29,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 fun RegisterScreen(
     onNavigateBack: () -> Unit,
     onRegisterSuccess: () -> Unit,
+    onLoginAfterRegisterSuccess: () -> Unit,
     viewModel: RegisterViewModel = hiltViewModel()
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -41,7 +42,13 @@ fun RegisterScreen(
                     snackbarHostState.showSnackbar(event.message)
                 }
                 is RegisterEvent.RegisterSuccess -> {
-                    snackbarHostState.showSnackbar("회원가입이 완료되었습니다")
+                    onRegisterSuccess()
+                }
+                is RegisterEvent.LoginAfterRegisterSuccess -> {
+                    onLoginAfterRegisterSuccess()
+                }
+                is RegisterEvent.LoginAfterRegisterFailed -> {
+                    snackbarHostState.showSnackbar(event.message)
                     onRegisterSuccess()
                 }
             }
