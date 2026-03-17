@@ -10,6 +10,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.outlined.Delete
 import androidx.compose.material.icons.outlined.Edit
 import androidx.compose.material.icons.outlined.OpenInBrowser
+import androidx.compose.material.icons.outlined.Share
+import androidx.compose.material.icons.rounded.MoreVert
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -21,6 +23,7 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scrapeverything.app.BuildConfig
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.ErrorView
 import com.scrapeverything.app.ui.component.FullScreenLoading
@@ -39,6 +42,7 @@ fun ScrapDetailScreen(
     val context = LocalContext.current
 
     var showDeleteDialog by remember { mutableStateOf(false) }
+    var showMenu by remember { mutableStateOf(false) }
 
     // 수정 화면에서 돌아왔을 때 데이터 갱신
     LifecycleResumeEffect(Unit) {
@@ -80,21 +84,65 @@ fun ScrapDetailScreen(
                 },
                 actions = {
                     if (uiState.scrapDetail != null) {
-                        IconButton(onClick = {
-                            onNavigateToEdit(viewModel.getScrapId())
-                        }) {
-                            Icon(
-                                Icons.Outlined.Edit,
-                                contentDescription = "수정",
-                                tint = MaterialTheme.colorScheme.primary
-                            )
-                        }
-                        IconButton(onClick = { showDeleteDialog = true }) {
-                            Icon(
-                                Icons.Outlined.Delete,
-                                contentDescription = "삭제",
-                                tint = MaterialTheme.colorScheme.error
-                            )
+                        Box {
+                            IconButton(onClick = { showMenu = true }) {
+                                Icon(
+                                    Icons.Rounded.MoreVert,
+                                    contentDescription = "메뉴"
+                                )
+                            }
+                            DropdownMenu(
+                                expanded = showMenu,
+                                onDismissRequest = { showMenu = false }
+                            ) {
+                                DropdownMenuItem(
+                                    text = { Text("수정") },
+                                    onClick = {
+                                        showMenu = false
+                                        onNavigateToEdit(viewModel.getScrapId())
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Edit, contentDescription = null)
+                                    }
+                                )
+                                DropdownMenuItem(
+                                    text = { Text("공유하기") },
+                                    onClick = {
+                                        showMenu = false
+                                        val detail = uiState.scrapDetail!!
+                                        val shareText = buildShareText(
+                                            title = detail.title,
+                                            url = detail.url,
+                                            description = detail.description
+                                        )
+                                        val sendIntent = Intent(Intent.ACTION_SEND).apply {
+                                            putExtra(Intent.EXTRA_TEXT, shareText)
+                                            type = "text/plain"
+                                        }
+                                        context.startActivity(
+                                            Intent.createChooser(sendIntent, "공유하기")
+                                        )
+                                    },
+                                    leadingIcon = {
+                                        Icon(Icons.Outlined.Share, contentDescription = null)
+                                    }
+                                )
+                                HorizontalDivider()
+                                DropdownMenuItem(
+                                    text = { Text("삭제", color = MaterialTheme.colorScheme.error) },
+                                    onClick = {
+                                        showMenu = false
+                                        showDeleteDialog = true
+                                    },
+                                    leadingIcon = {
+                                        Icon(
+                                            Icons.Outlined.Delete,
+                                            contentDescription = null,
+                                            tint = MaterialTheme.colorScheme.error
+                                        )
+                                    }
+                                )
+                            }
                         }
                     }
                 },
@@ -249,6 +297,28 @@ fun ScrapDetailScreen(
             },
             onDismiss = { showDeleteDialog = false }
         )
+    }
+}
+
+private fun buildShareText(title: String, url: String, description: String?): String {
+    val serverUrl = BuildConfig.SERVER_URL.trimEnd('/')
+    val encodedTitle = Uri.encode(title)
+    val encodedUrl = Uri.encode(url)
+    val encodedDesc = Uri.encode(description ?: "")
+    val shareLink = "$serverUrl/share?title=$encodedTitle&url=$encodedUrl&desc=$encodedDesc"
+
+    return buildString {
+        appendLine("[조각모음] $title")
+        appendLine(url)
+        if (!description.isNullOrBlank()) {
+            appendLine(description)
+        }
+        appendLine()
+        appendLine("▶ 조각모음에서 바로 저장하기:")
+        appendLine(shareLink)
+        appendLine()
+        appendLine("앱이 없다면 설치하기:")
+        append("https://play.google.com/store/apps/details?id=com.scrapeverything.app")
     }
 }
 

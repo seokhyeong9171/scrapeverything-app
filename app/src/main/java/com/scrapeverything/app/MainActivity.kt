@@ -85,7 +85,28 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun extractAndStoreSharedUrl(intent: Intent?): String? {
-        if (intent?.action == Intent.ACTION_SEND && intent.type == "text/plain") {
+        if (intent == null) return null
+
+        // App Links / 커스텀 스킴 딥링크 처리
+        // https://{domain}/share?title=...&url=...&desc=...
+        // scrapeverything://share?title=...&url=...&desc=...
+        if (intent.action == Intent.ACTION_VIEW) {
+            val data = intent.data
+            if (data != null &&
+                (data.path == "/share" || data.host == "share")
+            ) {
+                val url = data.getQueryParameter("url")
+                if (url != null) {
+                    sharedUrlHolder.url = url
+                    sharedUrlHolder.title = data.getQueryParameter("title")
+                    sharedUrlHolder.description = data.getQueryParameter("desc")
+                    return url
+                }
+            }
+        }
+
+        // 기존 ACTION_SEND 처리
+        if (intent.action == Intent.ACTION_SEND && intent.type == "text/plain") {
             val text = intent.getStringExtra(Intent.EXTRA_TEXT) ?: return null
             val url = extractUrlFromText(text)
             if (url != null) {
