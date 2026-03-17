@@ -1,6 +1,7 @@
 package com.scrapeverything.app.data.repository
 
 import com.scrapeverything.app.data.local.db.dao.CategoryDao
+import com.scrapeverything.app.data.local.db.dao.CategoryWithScrapCount
 import com.scrapeverything.app.data.local.db.entity.CategoryEntity
 import kotlinx.coroutines.flow.Flow
 import javax.inject.Inject
@@ -13,6 +14,10 @@ class CategoryRepository @Inject constructor(
 
     fun getAllCategories(): Flow<List<CategoryEntity>> {
         return categoryDao.getAllCategories()
+    }
+
+    fun getAllCategoriesWithScrapCount(): Flow<List<CategoryWithScrapCount>> {
+        return categoryDao.getAllCategoriesWithScrapCount()
     }
 
     suspend fun getAllCategoriesList(): List<CategoryEntity> {

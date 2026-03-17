@@ -58,36 +58,21 @@ class CategoryListViewModel @Inject constructor(
     private fun observeCategories() {
         viewModelScope.launch {
             _uiState.update { it.copy(isLoading = true) }
-            categoryRepository.getAllCategories().collect { categories ->
-                val categoriesWithCount = categories.map { entity ->
+            categoryRepository.getAllCategoriesWithScrapCount().collect { categoriesWithCount ->
+                val categories = categoriesWithCount.map { entity ->
                     CategoryWithCount(
                         categoryId = entity.id,
-                        categoryName = entity.name
+                        categoryName = entity.name,
+                        scrapCount = entity.scrapCount
                     )
                 }
                 _uiState.update {
                     it.copy(
-                        categories = categoriesWithCount,
+                        categories = categories,
                         isLoading = false,
                         error = null
                     )
                 }
-                loadScrapCounts(categoriesWithCount)
-            }
-        }
-    }
-
-    private suspend fun loadScrapCounts(categories: List<CategoryWithCount>) {
-        categories.forEach { category ->
-            val count = categoryRepository.getScrapCount(category.categoryId)
-            _uiState.update { state ->
-                state.copy(
-                    categories = state.categories.map {
-                        if (it.categoryId == category.categoryId) {
-                            it.copy(scrapCount = count)
-                        } else it
-                    }
-                )
             }
         }
     }
