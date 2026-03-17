@@ -28,6 +28,7 @@ import android.content.Intent
 import android.net.Uri
 import androidx.hilt.navigation.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.scrapeverything.app.BuildConfig
 import com.scrapeverything.app.data.local.ThemeMode
 import com.scrapeverything.app.ui.component.ConfirmDialog
 import com.scrapeverything.app.ui.component.ErrorView
@@ -482,24 +483,38 @@ private fun LoggedOutContent(
 private fun ContactFooter() {
     val context = LocalContext.current
     val contactEmail = "scrapeverything1234@gmail.com"
-    Text(
-        text = "문의 : $contactEmail",
-        style = MaterialTheme.typography.bodyMedium.copy(
-            textDecoration = TextDecoration.Underline
-        ),
-        color = MaterialTheme.colorScheme.onSurfaceVariant,
-        textAlign = TextAlign.Center,
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable {
-                val intent = Intent(Intent.ACTION_SENDTO).apply {
-                    data = Uri.parse("mailto:$contactEmail")
-                    putExtra(Intent.EXTRA_SUBJECT, "[조각모음] 문의")
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
+        Text(
+            text = "문의 : $contactEmail",
+            style = MaterialTheme.typography.bodyMedium.copy(
+                textDecoration = TextDecoration.Underline
+            ),
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+            textAlign = TextAlign.Center,
+            modifier = Modifier
+                .fillMaxWidth()
+                .clickable {
+                    val intent = Intent(Intent.ACTION_SENDTO).apply {
+                        data = Uri.parse("mailto:$contactEmail")
+                        putExtra(Intent.EXTRA_SUBJECT, "[조각모음] 문의")
+                    }
+                    context.startActivity(intent)
                 }
-                context.startActivity(intent)
-            }
-            .padding(vertical = 16.dp)
-    )
+                .padding(vertical = 16.dp)
+        )
+
+        Text(
+            text = "v${BuildConfig.VERSION_NAME}",
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.6f),
+            textAlign = TextAlign.Center,
+            modifier = Modifier.padding(bottom = 8.dp)
+        )
+    }
 }
 
 @Composable
