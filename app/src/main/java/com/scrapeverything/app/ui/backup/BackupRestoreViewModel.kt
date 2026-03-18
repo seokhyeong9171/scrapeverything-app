@@ -2,6 +2,7 @@ package com.scrapeverything.app.ui.backup
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scrapeverything.app.data.model.response.BackupItem
 import com.scrapeverything.app.data.repository.BackupRepository
 import com.scrapeverything.app.network.ApiResult
 import com.scrapeverything.app.util.ErrorMessages
@@ -19,8 +20,12 @@ import javax.inject.Inject
 data class BackupRestoreUiState(
     val isBackingUp: Boolean = false,
     val isRestoring: Boolean = false,
+    val isLoadingList: Boolean = false,
     val showBackupConfirmDialog: Boolean = false,
-    val showRestoreConfirmDialog: Boolean = false
+    val showRestoreSelectDialog: Boolean = false,
+    val showRestoreConfirmDialog: Boolean = false,
+    val backupList: List<BackupItem> = emptyList(),
+    val selectedBackup: BackupItem? = null
 )
 
 sealed class BackupRestoreEvent {
@@ -46,12 +51,51 @@ class BackupRestoreViewModel @Inject constructor(
         _uiState.update { it.copy(showBackupConfirmDialog = false) }
     }
 
-    fun showRestoreConfirmDialog() {
-        _uiState.update { it.copy(showRestoreConfirmDialog = true) }
+    fun loadBackupListAndShowDialog() {
+        viewModelScope.launch {
+            _uiState.update { it.copy(isLoadingList = true) }
+
+            when (val result = backupRepository.getBackupList()) {
+                is ApiResult.Success -> {
+                    if (result.data.isEmpty()) {
+                        _event.emit(BackupRestoreEvent.ShowSnackbar("백업 데이터가 없습니다"))
+                    } else {
+                        _uiState.update {
+                            it.copy(
+                                backupList = result.data,
+                                showRestoreSelectDialog = true
+                            )
+                        }
+                    }
+                }
+                is ApiResult.Error -> {
+                    _event.emit(BackupRestoreEvent.ShowSnackbar(ErrorMessages.getMessage(result.code)))
+                }
+                is ApiResult.NetworkError -> {
+                    _event.emit(BackupRestoreEvent.ShowSnackbar("네트워크 연결을 확인해주세요"))
+                }
+            }
+
+            _uiState.update { it.copy(isLoadingList = false) }
+        }
+    }
+
+    fun dismissRestoreSelectDialog() {
+        _uiState.update { it.copy(showRestoreSelectDialog = false) }
+    }
+
+    fun selectBackupForRestore(backup: BackupItem) {
+        _uiState.update {
+            it.copy(
+                selectedBackup = backup,
+                showRestoreSelectDialog = false,
+                showRestoreConfirmDialog = true
+            )
+        }
     }
 
     fun dismissRestoreConfirmDialog() {
-        _uiState.update { it.copy(showRestoreConfirmDialog = false) }
+        _uiState.update { it.copy(showRestoreConfirmDialog = false, selectedBackup = null) }
     }
 
     fun backup() {
@@ -75,19 +119,13 @@ class BackupRestoreViewModel @Inject constructor(
     }
 
     fun restore() {
+        val backupId = _uiState.value.selectedBackup?.backupId ?: return
         viewModelScope.launch {
             _uiState.update { it.copy(isRestoring = true, showRestoreConfirmDialog = false) }
 
-            when (val result = backupRepository.restore()) {
+            when (val result = backupRepository.restore(backupId)) {
                 is ApiResult.Success -> {
-                    val r = result.data
-                    if (r.addedCategories == 0 && r.addedScraps == 0) {
-                        _event.emit(BackupRestoreEvent.ShowSnackbar("새로 추가된 데이터가 없습니다"))
-                    } else {
-                        _event.emit(BackupRestoreEvent.ShowSnackbar(
-                            "복원 완료: 카테고리 ${r.addedCategories}개, 스크랩 ${r.addedScraps}개 추가"
-                        ))
-                    }
+                    _event.emit(BackupRestoreEvent.ShowSnackbar("복원이 완료되었습니다"))
                 }
                 is ApiResult.Error -> {
                     _event.emit(BackupRestoreEvent.ShowSnackbar(ErrorMessages.getMessage(result.code)))
@@ -97,7 +135,7 @@ class BackupRestoreViewModel @Inject constructor(
                 }
             }
 
-            _uiState.update { it.copy(isRestoring = false) }
+            _uiState.update { it.copy(isRestoring = false, selectedBackup = null) }
         }
     }
 }
