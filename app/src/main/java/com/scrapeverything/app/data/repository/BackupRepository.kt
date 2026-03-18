@@ -1,17 +1,42 @@
 package com.scrapeverything.app.data.repository
 
+import com.google.gson.Gson
 import com.scrapeverything.app.data.api.BackupApi
 import com.scrapeverything.app.data.local.db.dao.CategoryDao
 import com.scrapeverything.app.data.local.db.dao.ScrapDao
 import com.scrapeverything.app.data.local.db.entity.CategoryEntity
 import com.scrapeverything.app.data.local.db.entity.ScrapEntity
-import com.scrapeverything.app.data.model.request.BackupCategoryItem
 import com.scrapeverything.app.data.model.request.BackupRequest
-import com.scrapeverything.app.data.model.request.BackupScrapItem
+import com.scrapeverything.app.data.model.response.BackupItem
 import com.scrapeverything.app.network.ApiResult
 import com.scrapeverything.app.network.safeApiCall
 import javax.inject.Inject
 import javax.inject.Singleton
+
+private data class BackupData(
+    val categories: List<BackupCategoryData>,
+    val scraps: List<BackupScrapData>
+)
+
+private data class BackupCategoryData(
+    val uuid: String,
+    val name: String,
+    val createdAt: Long,
+    val updatedAt: Long
+)
+
+private data class BackupScrapData(
+    val uuid: String,
+    val categoryUuid: String,
+    val title: String,
+    val url: String,
+    val description: String?,
+    val ogTitle: String?,
+    val ogDescription: String?,
+    val ogImageUrl: String?,
+    val createdAt: Long,
+    val updatedAt: Long
+)
 
 @Singleton
 class BackupRepository @Inject constructor(
@@ -19,23 +44,24 @@ class BackupRepository @Inject constructor(
     private val categoryDao: CategoryDao,
     private val scrapDao: ScrapDao
 ) {
+    private val gson = Gson()
 
     suspend fun backup(): ApiResult<Unit> {
         val categories = categoryDao.getAllCategoriesList()
         val scraps = scrapDao.getAllScraps()
 
-        val request = BackupRequest(
+        val backupData = BackupData(
             categories = categories.map { cat ->
-                BackupCategoryItem(
+                BackupCategoryData(
                     uuid = cat.uuid,
                     name = cat.name,
-                    originalCreatedAt = cat.createdAt,
-                    originalUpdatedAt = cat.updatedAt
+                    createdAt = cat.createdAt,
+                    updatedAt = cat.updatedAt
                 )
             },
             scraps = scraps.map { scrap ->
                 val category = categories.find { it.id == scrap.categoryId }
-                BackupScrapItem(
+                BackupScrapData(
                     uuid = scrap.uuid,
                     categoryUuid = category?.uuid ?: "",
                     title = scrap.title,
@@ -44,48 +70,51 @@ class BackupRepository @Inject constructor(
                     ogTitle = scrap.ogTitle,
                     ogDescription = scrap.ogDescription,
                     ogImageUrl = scrap.ogImageUrl,
-                    originalCreatedAt = scrap.createdAt,
-                    originalUpdatedAt = scrap.updatedAt
+                    createdAt = scrap.createdAt,
+                    updatedAt = scrap.updatedAt
                 )
             }
         )
 
+        val jsonData = gson.toJson(backupData)
+        val request = BackupRequest(data = jsonData)
+
         return safeApiCall { backupApi.backup(request) }
     }
 
-    suspend fun restore(): ApiResult<RestoreResult> {
-        return when (val result = safeApiCall { backupApi.restore() }) {
+    suspend fun getBackupList(): ApiResult<List<BackupItem>> {
+        return when (val result = safeApiCall { backupApi.getBackupList() }) {
+            is ApiResult.Success -> ApiResult.Success(result.data.backups)
+            is ApiResult.Error -> ApiResult.Error(result.code, result.message)
+            is ApiResult.NetworkError -> ApiResult.NetworkError(result.exception)
+        }
+    }
+
+    suspend fun restore(backupId: Long): ApiResult<Unit> {
+        return when (val result = safeApiCall { backupApi.restore(backupId) }) {
             is ApiResult.Success -> {
-                val response = result.data
-                val existingCategoryUuids = categoryDao.getAllUuids().toSet()
-                val existingScrapUuids = scrapDao.getAllUuids().toSet()
+                val jsonData = result.data.data
+                val backupData = gson.fromJson(jsonData, BackupData::class.java)
 
-                // 로컬에 없는 카테고리만 추가
-                val newCategories = response.categories.filter { it.uuid !in existingCategoryUuids }
-                // UUID -> 새 로컬 ID 매핑
+                // 로컬 데이터 전부 삭제 (scrap 먼저 - FK 제약)
+                scrapDao.deleteAll()
+                categoryDao.deleteAll()
+
+                // 카테고리 삽입 및 UUID -> 새 로컬 ID 매핑
                 val categoryUuidToLocalId = mutableMapOf<String, Long>()
-
-                // 기존 카테고리의 UUID -> ID 매핑
-                val existingCategories = categoryDao.getAllCategoriesList()
-                existingCategories.forEach { cat ->
-                    categoryUuidToLocalId[cat.uuid] = cat.id
-                }
-
-                // 새 카테고리 삽입
-                newCategories.forEach { cat ->
+                backupData.categories.forEach { cat ->
                     val entity = CategoryEntity(
                         uuid = cat.uuid,
                         name = cat.name,
-                        createdAt = cat.originalCreatedAt,
-                        updatedAt = cat.originalUpdatedAt
+                        createdAt = cat.createdAt,
+                        updatedAt = cat.updatedAt
                     )
                     val newId = categoryDao.insert(entity)
                     categoryUuidToLocalId[cat.uuid] = newId
                 }
 
-                // 로컬에 없는 스크랩만 추가
-                val newScraps = response.scraps.filter { it.uuid !in existingScrapUuids }
-                newScraps.forEach { scrap ->
+                // 스크랩 삽입
+                backupData.scraps.forEach { scrap ->
                     val categoryId = categoryUuidToLocalId[scrap.categoryUuid]
                     if (categoryId != null) {
                         val entity = ScrapEntity(
@@ -97,27 +126,17 @@ class BackupRepository @Inject constructor(
                             ogTitle = scrap.ogTitle,
                             ogDescription = scrap.ogDescription,
                             ogImageUrl = scrap.ogImageUrl,
-                            createdAt = scrap.originalCreatedAt,
-                            updatedAt = scrap.originalUpdatedAt
+                            createdAt = scrap.createdAt,
+                            updatedAt = scrap.updatedAt
                         )
                         scrapDao.insert(entity)
                     }
                 }
 
-                ApiResult.Success(
-                    RestoreResult(
-                        addedCategories = newCategories.size,
-                        addedScraps = newScraps.size
-                    )
-                )
+                ApiResult.Success(Unit)
             }
             is ApiResult.Error -> ApiResult.Error(result.code, result.message)
             is ApiResult.NetworkError -> ApiResult.NetworkError(result.exception)
         }
     }
 }
-
-data class RestoreResult(
-    val addedCategories: Int,
-    val addedScraps: Int
-)
