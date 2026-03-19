@@ -13,3 +13,4 @@ app/build/
 *.keystore
 
 pepk.jar
+output.zip
