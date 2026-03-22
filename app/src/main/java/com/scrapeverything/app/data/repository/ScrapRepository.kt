@@ -27,13 +27,15 @@ class ScrapRepository @Inject constructor(
     }
 
     suspend fun addScrap(
-        categoryId: Long, title: String, url: String, description: String? = null
+        categoryId: Long, title: String, url: String,
+        summary: String? = null, description: String? = null
     ): Long {
         val scrapId = scrapDao.insert(
             ScrapEntity(
                 categoryId = categoryId,
                 title = title,
                 url = url,
+                summary = summary,
                 description = description
             )
         )
@@ -43,7 +45,8 @@ class ScrapRepository @Inject constructor(
 
     suspend fun updateScrap(
         scrapId: Long, categoryId: Long? = null,
-        title: String, url: String, description: String? = null
+        title: String, url: String,
+        summary: String? = null, description: String? = null
     ) {
         val existing = scrapDao.getScrapById(scrapId) ?: return
         val urlChanged = existing.url != url
@@ -52,6 +55,7 @@ class ScrapRepository @Inject constructor(
                 categoryId = categoryId ?: existing.categoryId,
                 title = title,
                 url = url,
+                summary = summary,
                 description = description,
                 updatedAt = System.currentTimeMillis()
             )

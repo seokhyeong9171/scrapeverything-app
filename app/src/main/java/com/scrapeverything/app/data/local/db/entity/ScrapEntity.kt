@@ -23,6 +23,7 @@ data class ScrapEntity(
     val categoryId: Long,
     val title: String,
     val url: String,
+    val summary: String? = null,
     val description: String? = null,
     val ogTitle: String? = null,
     val ogDescription: String? = null,

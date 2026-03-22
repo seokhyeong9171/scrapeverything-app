@@ -113,7 +113,18 @@ fun ScrapEditScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // AI 요약 생성 버튼
+                    // 설명
+                    OutlinedTextField(
+                        value = uiState.summary,
+                        onValueChange = { viewModel.onSummaryChanged(it) },
+                        label = { Text("설명 (선택)") },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth()
+                    )
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // AI 요약으로 상세정보 생성 버튼
                     OutlinedButton(
                         onClick = { viewModel.generateSummary() },
                         enabled = !uiState.isGeneratingSummary && !uiState.isSaving,
@@ -134,7 +145,7 @@ fun ScrapEditScreen(
                                 modifier = Modifier.size(18.dp)
                             )
                             Spacer(modifier = Modifier.width(8.dp))
-                            Text("AI 요약 생성")
+                            Text("AI 요약으로 상세정보 생성")
                         }
                     }
 

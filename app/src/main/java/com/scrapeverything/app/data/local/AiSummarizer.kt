@@ -1,5 +1,6 @@
 package com.scrapeverything.app.data.local
 
+import android.util.Log
 import com.scrapeverything.app.data.api.GroqApi
 import com.scrapeverything.app.data.model.groq.GroqChatRequest
 import com.scrapeverything.app.data.model.groq.GroqMessage
@@ -19,7 +20,10 @@ class AiSummarizer @Inject constructor(
         try {
             val normalizedUrl = if (!url.startsWith("http")) "https://$url" else url
             val content = extractContent(normalizedUrl)
-            if (content == null) return@withContext null
+            if (content == null) {
+                Log.e(TAG, "Failed to extract content from: $normalizedUrl")
+                return@withContext null
+            }
 
             val messages = buildPromptMessages(normalizedUrl, content)
             val request = GroqChatRequest(messages = messages)
@@ -28,11 +32,17 @@ class AiSummarizer @Inject constructor(
             if (response.isSuccessful) {
                 response.body()?.choices?.firstOrNull()?.message?.content?.trim()
             } else {
+                Log.e(TAG, "Groq API error: ${response.code()} ${response.errorBody()?.string()}")
                 null
             }
         } catch (e: Exception) {
+            Log.e(TAG, "Summarize failed", e)
             null
         }
+    }
+
+    companion object {
+        private const val TAG = "AiSummarizer"
     }
 
     private fun extractContent(url: String): ContentResult? {

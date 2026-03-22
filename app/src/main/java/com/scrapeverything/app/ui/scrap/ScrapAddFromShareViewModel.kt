@@ -23,6 +23,7 @@ data class ScrapAddFromShareUiState(
     val selectedCategory: CategoryEntity? = null,
     val scrapTitle: String = "",
     val url: String = "",
+    val summary: String = "",
     val description: String = "",
     val isSaving: Boolean = false,
     val isLoadingCategories: Boolean = true,
@@ -87,6 +88,10 @@ class ScrapAddFromShareViewModel @Inject constructor(
         _uiState.update { it.copy(url = url) }
     }
 
+    fun onSummaryChanged(summary: String) {
+        _uiState.update { it.copy(summary = summary) }
+    }
+
     fun onDescriptionChanged(description: String) {
         _uiState.update { it.copy(description = description) }
     }
@@ -138,6 +143,7 @@ class ScrapAddFromShareViewModel @Inject constructor(
                 categoryId = state.selectedCategory.id,
                 title = state.scrapTitle,
                 url = state.url,
+                summary = state.summary.ifBlank { null },
                 description = state.description.ifBlank { null }
             )
             _uiState.update { it.copy(isSaving = false) }

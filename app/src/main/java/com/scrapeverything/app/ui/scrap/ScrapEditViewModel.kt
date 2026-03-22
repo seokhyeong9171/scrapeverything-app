@@ -20,6 +20,7 @@ import javax.inject.Inject
 data class ScrapEditUiState(
     val scrapTitle: String = "",
     val url: String = "",
+    val summary: String = "",
     val description: String = "",
     val categoryId: Long? = null,
     val categoryName: String = "",
@@ -65,6 +66,7 @@ class ScrapEditViewModel @Inject constructor(
                     it.copy(
                         scrapTitle = scrap.title,
                         url = scrap.url,
+                        summary = scrap.summary ?: "",
                         description = scrap.description ?: "",
                         categoryId = scrap.categoryId,
                         categoryName = category?.name ?: "",
@@ -85,6 +87,10 @@ class ScrapEditViewModel @Inject constructor(
 
     fun onUrlChanged(url: String) {
         _uiState.update { it.copy(url = url) }
+    }
+
+    fun onSummaryChanged(summary: String) {
+        _uiState.update { it.copy(summary = summary) }
     }
 
     fun onDescriptionChanged(description: String) {
@@ -133,6 +139,7 @@ class ScrapEditViewModel @Inject constructor(
                 categoryId = state.categoryId,
                 title = state.scrapTitle,
                 url = state.url,
+                summary = state.summary.ifBlank { null },
                 description = state.description.ifBlank { null }
             )
             _uiState.update { it.copy(isSaving = false) }
