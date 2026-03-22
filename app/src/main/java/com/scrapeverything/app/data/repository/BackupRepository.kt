@@ -1,7 +1,9 @@
 package com.scrapeverything.app.data.repository
 
+import androidx.room.withTransaction
 import com.google.gson.Gson
 import com.scrapeverything.app.data.api.BackupApi
+import com.scrapeverything.app.data.local.db.AppDatabase
 import com.scrapeverything.app.data.local.db.dao.CategoryDao
 import com.scrapeverything.app.data.local.db.dao.ScrapDao
 import com.scrapeverything.app.data.local.db.entity.CategoryEntity
@@ -41,6 +43,7 @@ private data class BackupScrapData(
 @Singleton
 class BackupRepository @Inject constructor(
     private val backupApi: BackupApi,
+    private val database: AppDatabase,
     private val categoryDao: CategoryDao,
     private val scrapDao: ScrapDao
 ) {
@@ -93,47 +96,53 @@ class BackupRepository @Inject constructor(
     suspend fun restore(backupId: Long): ApiResult<Unit> {
         return when (val result = safeApiCall { backupApi.restore(backupId) }) {
             is ApiResult.Success -> {
-                val jsonData = result.data.data
-                val backupData = gson.fromJson(jsonData, BackupData::class.java)
+                try {
+                    val jsonData = result.data.data
+                    val backupData = gson.fromJson(jsonData, BackupData::class.java)
 
-                // 로컬 데이터 전부 삭제 (scrap 먼저 - FK 제약)
-                scrapDao.deleteAll()
-                categoryDao.deleteAll()
+                    database.withTransaction {
+                        // 로컬 데이터 전부 삭제 (scrap 먼저 - FK 제약)
+                        scrapDao.deleteAll()
+                        categoryDao.deleteAll()
 
-                // 카테고리 삽입 및 UUID -> 새 로컬 ID 매핑
-                val categoryUuidToLocalId = mutableMapOf<String, Long>()
-                backupData.categories.forEach { cat ->
-                    val entity = CategoryEntity(
-                        uuid = cat.uuid,
-                        name = cat.name,
-                        createdAt = cat.createdAt,
-                        updatedAt = cat.updatedAt
-                    )
-                    val newId = categoryDao.insert(entity)
-                    categoryUuidToLocalId[cat.uuid] = newId
-                }
+                        // 카테고리 삽입 및 UUID -> 새 로컬 ID 매핑
+                        val categoryUuidToLocalId = mutableMapOf<String, Long>()
+                        backupData.categories.forEach { cat ->
+                            val entity = CategoryEntity(
+                                uuid = cat.uuid,
+                                name = cat.name,
+                                createdAt = cat.createdAt,
+                                updatedAt = cat.updatedAt
+                            )
+                            val newId = categoryDao.insert(entity)
+                            categoryUuidToLocalId[cat.uuid] = newId
+                        }
 
-                // 스크랩 삽입
-                backupData.scraps.forEach { scrap ->
-                    val categoryId = categoryUuidToLocalId[scrap.categoryUuid]
-                    if (categoryId != null) {
-                        val entity = ScrapEntity(
-                            uuid = scrap.uuid,
-                            categoryId = categoryId,
-                            title = scrap.title,
-                            url = scrap.url,
-                            description = scrap.description,
-                            ogTitle = scrap.ogTitle,
-                            ogDescription = scrap.ogDescription,
-                            ogImageUrl = scrap.ogImageUrl,
-                            createdAt = scrap.createdAt,
-                            updatedAt = scrap.updatedAt
-                        )
-                        scrapDao.insert(entity)
+                        // 스크랩 삽입
+                        backupData.scraps.forEach { scrap ->
+                            val categoryId = categoryUuidToLocalId[scrap.categoryUuid]
+                            if (categoryId != null) {
+                                val entity = ScrapEntity(
+                                    uuid = scrap.uuid,
+                                    categoryId = categoryId,
+                                    title = scrap.title,
+                                    url = scrap.url,
+                                    description = scrap.description,
+                                    ogTitle = scrap.ogTitle,
+                                    ogDescription = scrap.ogDescription,
+                                    ogImageUrl = scrap.ogImageUrl,
+                                    createdAt = scrap.createdAt,
+                                    updatedAt = scrap.updatedAt
+                                )
+                                scrapDao.insert(entity)
+                            }
+                        }
                     }
-                }
 
-                ApiResult.Success(Unit)
+                    ApiResult.Success(Unit)
+                } catch (e: Exception) {
+                    ApiResult.Error("RESTORE_FAILED", "데이터 복원에 실패했습니다")
+                }
             }
             is ApiResult.Error -> ApiResult.Error(result.code, result.message)
             is ApiResult.NetworkError -> ApiResult.NetworkError(result.exception)
