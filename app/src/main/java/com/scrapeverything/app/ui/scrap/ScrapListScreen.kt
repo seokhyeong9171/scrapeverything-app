@@ -175,9 +175,9 @@ private fun ScrapListItem(
                     maxLines = 2,
                     overflow = TextOverflow.Ellipsis
                 )
-                if (!scrap.description.isNullOrBlank()) {
+                if (!scrap.summary.isNullOrBlank()) {
                     Text(
-                        text = scrap.description,
+                        text = scrap.summary,
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,

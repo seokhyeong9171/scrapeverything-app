@@ -3,6 +3,7 @@ package com.scrapeverything.app.ui.scrap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scrapeverything.app.data.local.AiSummarizer
 import com.scrapeverything.app.data.local.db.entity.CategoryEntity
 import com.scrapeverything.app.data.repository.CategoryRepository
 import com.scrapeverything.app.data.repository.ScrapRepository
@@ -22,9 +23,11 @@ data class ScrapAddUiState(
     val selectedCategory: CategoryEntity? = null,
     val scrapTitle: String = "",
     val url: String = "",
+    val summary: String = "",
     val description: String = "",
     val isSaving: Boolean = false,
-    val isLoadingCategories: Boolean = true
+    val isLoadingCategories: Boolean = true,
+    val isGeneratingSummary: Boolean = false
 )
 
 sealed class ScrapAddEvent {
@@ -36,7 +39,8 @@ sealed class ScrapAddEvent {
 class ScrapAddViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val categoryRepository: CategoryRepository,
-    private val scrapRepository: ScrapRepository
+    private val scrapRepository: ScrapRepository,
+    private val aiSummarizer: AiSummarizer
 ) : ViewModel() {
 
     private val initialCategoryId: Long = savedStateHandle["categoryId"] ?: 0L
@@ -79,8 +83,32 @@ class ScrapAddViewModel @Inject constructor(
         _uiState.update { it.copy(url = url) }
     }
 
+    fun onSummaryChanged(summary: String) {
+        _uiState.update { it.copy(summary = summary) }
+    }
+
     fun onDescriptionChanged(description: String) {
         _uiState.update { it.copy(description = description) }
+    }
+
+    fun generateSummary() {
+        val url = _uiState.value.url
+        if (url.isBlank()) {
+            viewModelScope.launch {
+                _event.emit(ScrapAddEvent.ShowSnackbar("URL을 입력해주세요"))
+            }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingSummary = true) }
+            val summary = aiSummarizer.summarize(url)
+            if (summary != null) {
+                _uiState.update { it.copy(description = summary, isGeneratingSummary = false) }
+            } else {
+                _uiState.update { it.copy(isGeneratingSummary = false) }
+                _event.emit(ScrapAddEvent.ShowSnackbar("요약 생성에 실패했습니다"))
+            }
+        }
     }
 
     fun saveScrap() {
@@ -110,6 +138,7 @@ class ScrapAddViewModel @Inject constructor(
                 categoryId = state.selectedCategory.id,
                 title = state.scrapTitle,
                 url = state.url,
+                summary = state.summary.ifBlank { null },
                 description = state.description.ifBlank { null }
             )
             _uiState.update { it.copy(isSaving = false) }

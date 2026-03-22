@@ -248,10 +248,27 @@ fun ScrapDetailScreen(
                     }
 
                     // 설명
+                    if (!detail.summary.isNullOrBlank()) {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            text = "설명",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.SemiBold,
+                            color = MaterialTheme.colorScheme.onSurface
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Text(
+                            text = detail.summary,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                        )
+                    }
+
+                    // 상세정보
                     if (!detail.description.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "메모",
+                            text = "상세정보",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface
