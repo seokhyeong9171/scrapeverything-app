@@ -36,6 +36,11 @@ android {
             "ADMOB_BANNER_ID",
             "\"${localProperties.getProperty("ADMOB_BANNER_ID", "")}\""
         )
+        buildConfigField(
+            "String",
+            "GROQ_API_KEY",
+            "\"${localProperties.getProperty("GROQ_API_KEY", "")}\""
+        )
 
         // network_security_config에서 사용할 서버 호스트
         val serverHost = serverUrl

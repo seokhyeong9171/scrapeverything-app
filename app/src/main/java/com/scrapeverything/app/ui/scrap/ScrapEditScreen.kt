@@ -5,6 +5,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.outlined.AutoAwesome
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
@@ -112,11 +113,38 @@ fun ScrapEditScreen(
 
                     Spacer(modifier = Modifier.height(12.dp))
 
-                    // 설명
+                    // AI 요약 생성 버튼
+                    OutlinedButton(
+                        onClick = { viewModel.generateSummary() },
+                        enabled = !uiState.isGeneratingSummary && !uiState.isSaving,
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        if (uiState.isGeneratingSummary) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(18.dp),
+                                strokeWidth = 2.dp,
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("요약 생성 중...")
+                        } else {
+                            Icon(
+                                Icons.Outlined.AutoAwesome,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("AI 요약 생성")
+                        }
+                    }
+
+                    Spacer(modifier = Modifier.height(12.dp))
+
+                    // 상세정보
                     OutlinedTextField(
                         value = uiState.description,
                         onValueChange = { viewModel.onDescriptionChanged(it) },
-                        label = { Text("메모 (선택)") },
+                        label = { Text("상세정보 (선택)") },
                         minLines = 3,
                         maxLines = 6,
                         modifier = Modifier.fillMaxWidth()
@@ -127,7 +155,7 @@ fun ScrapEditScreen(
                     // 저장 버튼
                     Button(
                         onClick = { viewModel.saveScrap() },
-                        enabled = !uiState.isSaving,
+                        enabled = !uiState.isSaving && !uiState.isGeneratingSummary,
                         modifier = Modifier.fillMaxWidth()
                     ) {
                         if (uiState.isSaving) {

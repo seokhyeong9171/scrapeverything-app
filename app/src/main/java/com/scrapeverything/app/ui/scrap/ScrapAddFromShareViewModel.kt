@@ -2,6 +2,7 @@ package com.scrapeverything.app.ui.scrap
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scrapeverything.app.data.local.AiSummarizer
 import com.scrapeverything.app.data.local.SharedUrlHolder
 import com.scrapeverything.app.data.local.db.entity.CategoryEntity
 import com.scrapeverything.app.data.repository.CategoryRepository
@@ -25,6 +26,7 @@ data class ScrapAddFromShareUiState(
     val description: String = "",
     val isSaving: Boolean = false,
     val isLoadingCategories: Boolean = true,
+    val isGeneratingSummary: Boolean = false,
     val error: String? = null
 )
 
@@ -37,7 +39,8 @@ sealed class ScrapAddFromShareEvent {
 class ScrapAddFromShareViewModel @Inject constructor(
     private val sharedUrlHolder: SharedUrlHolder,
     private val categoryRepository: CategoryRepository,
-    private val scrapRepository: ScrapRepository
+    private val scrapRepository: ScrapRepository,
+    private val aiSummarizer: AiSummarizer
 ) : ViewModel() {
 
     private val sharedData = sharedUrlHolder.consumeAll()
@@ -86,6 +89,26 @@ class ScrapAddFromShareViewModel @Inject constructor(
 
     fun onDescriptionChanged(description: String) {
         _uiState.update { it.copy(description = description) }
+    }
+
+    fun generateSummary() {
+        val url = _uiState.value.url
+        if (url.isBlank()) {
+            viewModelScope.launch {
+                _event.emit(ScrapAddFromShareEvent.ShowSnackbar("URL을 입력해주세요"))
+            }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingSummary = true) }
+            val summary = aiSummarizer.summarize(url)
+            if (summary != null) {
+                _uiState.update { it.copy(description = summary, isGeneratingSummary = false) }
+            } else {
+                _uiState.update { it.copy(isGeneratingSummary = false) }
+                _event.emit(ScrapAddFromShareEvent.ShowSnackbar("요약 생성에 실패했습니다"))
+            }
+        }
     }
 
     fun saveScrap() {

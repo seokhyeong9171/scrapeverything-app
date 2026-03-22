@@ -251,7 +251,7 @@ fun ScrapDetailScreen(
                     if (!detail.description.isNullOrBlank()) {
                         Spacer(modifier = Modifier.height(16.dp))
                         Text(
-                            text = "메모",
+                            text = "상세정보",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.SemiBold,
                             color = MaterialTheme.colorScheme.onSurface

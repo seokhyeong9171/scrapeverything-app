@@ -3,6 +3,7 @@ package com.scrapeverything.app.ui.scrap
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.scrapeverything.app.data.local.AiSummarizer
 import com.scrapeverything.app.data.repository.CategoryRepository
 import com.scrapeverything.app.data.repository.ScrapRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -24,6 +25,7 @@ data class ScrapEditUiState(
     val categoryName: String = "",
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
+    val isGeneratingSummary: Boolean = false,
     val error: String? = null
 )
 
@@ -36,7 +38,8 @@ sealed class ScrapEditEvent {
 class ScrapEditViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val scrapRepository: ScrapRepository,
-    private val categoryRepository: CategoryRepository
+    private val categoryRepository: CategoryRepository,
+    private val aiSummarizer: AiSummarizer
 ) : ViewModel() {
 
     private val scrapId: Long = savedStateHandle["scrapId"] ?: 0L
@@ -86,6 +89,26 @@ class ScrapEditViewModel @Inject constructor(
 
     fun onDescriptionChanged(description: String) {
         _uiState.update { it.copy(description = description) }
+    }
+
+    fun generateSummary() {
+        val url = _uiState.value.url
+        if (url.isBlank()) {
+            viewModelScope.launch {
+                _event.emit(ScrapEditEvent.ShowSnackbar("URL을 입력해주세요"))
+            }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingSummary = true) }
+            val summary = aiSummarizer.summarize(url)
+            if (summary != null) {
+                _uiState.update { it.copy(description = summary, isGeneratingSummary = false) }
+            } else {
+                _uiState.update { it.copy(isGeneratingSummary = false) }
+                _event.emit(ScrapEditEvent.ShowSnackbar("요약 생성에 실패했습니다"))
+            }
+        }
     }
 
     fun saveScrap() {
