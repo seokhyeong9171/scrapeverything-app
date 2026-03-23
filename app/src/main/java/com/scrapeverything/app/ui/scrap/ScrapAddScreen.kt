@@ -1,6 +1,7 @@
 package com.scrapeverything.app.ui.scrap
 
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -106,6 +107,53 @@ fun ScrapAddScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
+            Spacer(modifier = Modifier.height(8.dp))
+
+            // AI 버튼 Row
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                OutlinedButton(
+                    onClick = { viewModel.generateDescription() },
+                    enabled = !uiState.isGeneratingDescription && !uiState.isGeneratingSummary && !uiState.isSaving,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                ) {
+                    if (uiState.isGeneratingDescription) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("생성 중...", style = MaterialTheme.typography.labelMedium)
+                    } else {
+                        Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("AI 설명 생성", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+                OutlinedButton(
+                    onClick = { viewModel.generateSummary() },
+                    enabled = !uiState.isGeneratingSummary && !uiState.isGeneratingDescription && !uiState.isSaving,
+                    modifier = Modifier.weight(1f),
+                    contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
+                ) {
+                    if (uiState.isGeneratingSummary) {
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(16.dp),
+                            strokeWidth = 2.dp
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("생성 중...", style = MaterialTheme.typography.labelMedium)
+                    } else {
+                        Icon(Icons.Outlined.AutoAwesome, contentDescription = null, modifier = Modifier.size(16.dp))
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text("AI 상세정보 생성", style = MaterialTheme.typography.labelMedium)
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.height(12.dp))
 
             // 설명
@@ -116,33 +164,6 @@ fun ScrapAddScreen(
                 singleLine = true,
                 modifier = Modifier.fillMaxWidth()
             )
-
-            Spacer(modifier = Modifier.height(12.dp))
-
-            // AI 요약으로 상세정보 생성 버튼
-            OutlinedButton(
-                onClick = { viewModel.generateSummary() },
-                enabled = !uiState.isGeneratingSummary && !uiState.isSaving,
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                if (uiState.isGeneratingSummary) {
-                    CircularProgressIndicator(
-                        modifier = Modifier.size(18.dp),
-                        strokeWidth = 2.dp,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("요약 생성 중...")
-                } else {
-                    Icon(
-                        Icons.Outlined.AutoAwesome,
-                        contentDescription = null,
-                        modifier = Modifier.size(18.dp)
-                    )
-                    Spacer(modifier = Modifier.width(8.dp))
-                    Text("AI 요약으로 상세정보 생성")
-                }
-            }
 
             Spacer(modifier = Modifier.height(12.dp))
 
@@ -161,7 +182,7 @@ fun ScrapAddScreen(
             // 저장 버튼
             Button(
                 onClick = { viewModel.saveScrap() },
-                enabled = !uiState.isSaving && !uiState.isGeneratingSummary,
+                enabled = !uiState.isSaving && !uiState.isGeneratingSummary && !uiState.isGeneratingDescription,
                 modifier = Modifier.fillMaxWidth()
             ) {
                 if (uiState.isSaving) {

@@ -27,6 +27,7 @@ data class ScrapEditUiState(
     val isLoading: Boolean = false,
     val isSaving: Boolean = false,
     val isGeneratingSummary: Boolean = false,
+    val isGeneratingDescription: Boolean = false,
     val error: String? = null
 )
 
@@ -95,6 +96,26 @@ class ScrapEditViewModel @Inject constructor(
 
     fun onDescriptionChanged(description: String) {
         _uiState.update { it.copy(description = description) }
+    }
+
+    fun generateDescription() {
+        val url = _uiState.value.url
+        if (url.isBlank()) {
+            viewModelScope.launch {
+                _event.emit(ScrapEditEvent.ShowSnackbar("URL을 입력해주세요"))
+            }
+            return
+        }
+        viewModelScope.launch {
+            _uiState.update { it.copy(isGeneratingDescription = true) }
+            val oneLiner = aiSummarizer.generateOneLiner(url)
+            if (oneLiner != null) {
+                _uiState.update { it.copy(summary = oneLiner, isGeneratingDescription = false) }
+            } else {
+                _uiState.update { it.copy(isGeneratingDescription = false) }
+                _event.emit(ScrapEditEvent.ShowSnackbar("설명 생성에 실패했습니다"))
+            }
+        }
     }
 
     fun generateSummary() {

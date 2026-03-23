@@ -2,6 +2,7 @@ package com.scrapeverything.app.data.repository
 
 import androidx.room.withTransaction
 import com.google.gson.Gson
+import com.google.gson.annotations.SerializedName
 import com.scrapeverything.app.data.api.BackupApi
 import com.scrapeverything.app.data.local.db.AppDatabase
 import com.scrapeverything.app.data.local.db.dao.CategoryDao
@@ -16,29 +17,29 @@ import javax.inject.Inject
 import javax.inject.Singleton
 
 private data class BackupData(
-    val categories: List<BackupCategoryData>,
-    val scraps: List<BackupScrapData>
+    @SerializedName("categories") val categories: List<BackupCategoryData>,
+    @SerializedName("scraps") val scraps: List<BackupScrapData>
 )
 
 private data class BackupCategoryData(
-    val uuid: String,
-    val name: String,
-    val createdAt: Long,
-    val updatedAt: Long
+    @SerializedName("uuid") val uuid: String,
+    @SerializedName("name") val name: String,
+    @SerializedName("createdAt") val createdAt: Long,
+    @SerializedName("updatedAt") val updatedAt: Long
 )
 
 private data class BackupScrapData(
-    val uuid: String,
-    val categoryUuid: String,
-    val title: String,
-    val url: String,
-    val summary: String?,
-    val description: String?,
-    val ogTitle: String?,
-    val ogDescription: String?,
-    val ogImageUrl: String?,
-    val createdAt: Long,
-    val updatedAt: Long
+    @SerializedName("uuid") val uuid: String,
+    @SerializedName("categoryUuid") val categoryUuid: String,
+    @SerializedName("title") val title: String,
+    @SerializedName("url") val url: String,
+    @SerializedName("summary") val summary: String?,
+    @SerializedName("description") val description: String?,
+    @SerializedName("ogTitle") val ogTitle: String?,
+    @SerializedName("ogDescription") val ogDescription: String?,
+    @SerializedName("ogImageUrl") val ogImageUrl: String?,
+    @SerializedName("createdAt") val createdAt: Long,
+    @SerializedName("updatedAt") val updatedAt: Long
 )
 
 @Singleton

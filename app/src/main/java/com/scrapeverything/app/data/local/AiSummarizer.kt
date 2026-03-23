@@ -16,6 +16,49 @@ class AiSummarizer @Inject constructor(
     private val groqApi: GroqApi
 ) {
 
+    suspend fun generateOneLiner(url: String): String? = withContext(Dispatchers.IO) {
+        try {
+            val normalizedUrl = if (!url.startsWith("http")) "https://$url" else url
+            val content = extractContent(normalizedUrl)
+            if (content == null) {
+                Log.e(TAG, "Failed to extract content from: $normalizedUrl")
+                return@withContext null
+            }
+
+            val systemMessage = GroqMessage(
+                role = "system",
+                content = "웹 콘텐츠를 한 문장으로 간결하게 한국어로 요약해주세요. " +
+                        "\"이 글은\", \"이 페이지는\" 같은 서두 없이 핵심 내용만 요약하세요. " +
+                        "반드시 한 문장으로만 답변하세요."
+            )
+
+            val userContent = when (content) {
+                is ContentResult.WebContent -> "다음 콘텐츠를 한 문장으로 요약해주세요.\n\nURL: $normalizedUrl\n내용:\n${content.text}"
+                is ContentResult.OgContent -> {
+                    buildString {
+                        append("다음 콘텐츠의 제목과 설명을 바탕으로 한 문장으로 요약해주세요.\n\nURL: $normalizedUrl")
+                        if (content.title != null) append("\n제목: ${content.title}")
+                        if (content.description != null) append("\n설명: ${content.description}")
+                    }
+                }
+            }
+
+            val messages = listOf(systemMessage, GroqMessage(role = "user", content = userContent))
+            val request = GroqChatRequest(messages = messages, max_tokens = 100)
+            val response = groqApi.chatCompletion(request)
+
+            if (response.isSuccessful) {
+                response.body()?.choices?.firstOrNull()?.message?.content?.trim()
+            } else {
+                Log.e(TAG, "Groq API error: ${response.code()} ${response.errorBody()?.string()}")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e(TAG, "Generate one-liner failed", e)
+            null
+        }
+    }
+
     suspend fun summarize(url: String): String? = withContext(Dispatchers.IO) {
         try {
             val normalizedUrl = if (!url.startsWith("http")) "https://$url" else url
