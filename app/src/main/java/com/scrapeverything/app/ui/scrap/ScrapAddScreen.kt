@@ -107,9 +107,12 @@ fun ScrapAddScreen(
                 modifier = Modifier.fillMaxWidth()
             )
 
-            Spacer(modifier = Modifier.height(8.dp))
+            Spacer(modifier = Modifier.height(12.dp))
 
             // AI 버튼 Row
+            val aiButtonColors = ButtonDefaults.outlinedButtonColors(
+                containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
+            )
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -118,6 +121,7 @@ fun ScrapAddScreen(
                     onClick = { viewModel.generateDescription() },
                     enabled = !uiState.isGeneratingDescription && !uiState.isGeneratingSummary && !uiState.isSaving,
                     modifier = Modifier.weight(1f),
+                    colors = aiButtonColors,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
                     if (uiState.isGeneratingDescription) {
@@ -137,6 +141,7 @@ fun ScrapAddScreen(
                     onClick = { viewModel.generateSummary() },
                     enabled = !uiState.isGeneratingSummary && !uiState.isGeneratingDescription && !uiState.isSaving,
                     modifier = Modifier.weight(1f),
+                    colors = aiButtonColors,
                     contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
                 ) {
                     if (uiState.isGeneratingSummary) {
@@ -154,7 +159,7 @@ fun ScrapAddScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(4.dp))
 
             // 설명
             OutlinedTextField(
